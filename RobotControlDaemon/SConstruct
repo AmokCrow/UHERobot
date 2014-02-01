@@ -1,0 +1,11 @@
+#Make it fancy later. It works, for now.
+
+src_files = [
+   'main.cpp',
+   'ControlLogic.cpp'
+]
+
+
+
+Program(target = 'RobotControlDaemon', source = src_files)
+
