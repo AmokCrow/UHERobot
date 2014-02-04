@@ -1,0 +1,54 @@
+Specification for communication between the Robot Control Board and the Robot Control Daemon, v1.0
+Johannes Sulkakoski, 2014
+
+
+
+Intro
+This specification is in respect to the UHERobot physical specification v1.0 . Reader is presumed to be familiar with this.
+
+1. Physical and logical link
+The Control Daemon and the Control Board communicate via an UART serial link, at a baud rate of 9600bps. The relatively slow speed was chosen due to a lack of CTS and DTR signals in the physical connection.
+
+2. Message structure
+A control message consists of a message start symbol, one header byte, 0-20 data bytes and one end-of-message symbol. The header byte defines the purpose of the message. However, separate sets of header byte values are used daemon-to-board and board-to-daemon. The message data is BASE16-encoded.
+
+Different symbols may be added later. The current set of control symbols are:
+BEGINNING_OF_MESSAGE = 'b'
+END_OF_MESSAGE = 'e'
+
+The BASE16 symbols are:
+0-9, A-F
+
+All symbols for communication are ASCII-encoded and case-sensitive.
+
+3. Message logic
+Both parties may send a message at any time, asynchronously. Messages in general do not require an immediate reply. However, a silence of 5 seconds in either direction will result in the presumption of a dead link. Therefore, both parties will send a heartbeat message if no other communication has been done for 2 seconds. In the event that one party experiences the no-messages timeout, it shall enter a safe state and attempt to notify the other party by periodically transmitting an error message.
+
+4. Message types
+The message type is determined only by the header byte in messages that are started with the symbol 'b'. Otheer start symbols may be added later. The header bytes shall be defined in code as an enumeration.
+
+4.1 Daemon-to-board
+
+SET_MOTORS = 0
+SET_SERVOS = 1
+HEARTBEAT = 2
+ERROR = 3
+
+Messages explained below.
+
+4.1.1 Set motor speed
+Header value: 0
+Data bytes: 2
+
+This message is a command to set the speed of the 2 drive motors of the robot. 2 bytes of data; one for each motor. The bytes shall be interpreted as signed binary values in the range of -128 - 127, where 127 means full speed forward and -128 full speed in reverse. 0 means a halt of rotation.
+
+4.1.2 Set servo positions
+Header value: 1
+Data bytes: 2-x, depending on the number of servos onboard.
+
+This message is a command to move the onboard servos to a different position. The data bytes are interpreted as unsigned binary values in the range 0-255, where 128 signifies the middle position in the range of motion of the servo. 
+
+4.2 Board-to-daemon
+
+
+
