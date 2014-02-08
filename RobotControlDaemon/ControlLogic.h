@@ -19,7 +19,7 @@
 class ControlLogic
 {
 public:
-  ControlLogic(const char const* pipeName, const char const* serialPort);
+  ControlLogic(const char* pipeName, const char* serialPort);
   
 private:
  
