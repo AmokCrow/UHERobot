@@ -8,6 +8,7 @@ MessageParser::MessageParser(const char* serialPort)
      mThreadInstruction(END),
      mRxMsgBuffMutex(),
      mTxMsgBuffMutex(),
+     mRxBufferBytesCounter(0),
      mTxBufferBytes(0)
 {
    init();
@@ -149,15 +150,104 @@ void MessageParser::readIncomingData()
 {
     char buffer;
     int numRead;
-    do
+    while(1)
     {
         numRead = read(mPortNumber, &buffer, 1);
-        response.append( &buf );
+        if(numRead == 0)
+        {
+            break;
+        }
+        else if(numRead < 0)
+        {
+            // I don't count this as an RX error yet, since I'm not sure if this happens whenever there are simply no characters to read.
+            std::cout << "Error: read() returned less than 0" << std::endl;
+            break;
+        }
+        else if(buffer == eControlChar::CLEAR_BUFFER)
+        {
+            mRxBufferBytesCounter = 0;
+        }
+        else if(buffer == eControlChar::END_OF_MESSAGE)
+        {
+            decodeMsgToQueue();
+        }
+        else
+        {
+            if(!incomingCharacter(buffer))
+            {
+                rxError("Error: Unknown character");
+            }
+        }
     }
-    while( buf != '\r' && n > 0);
+}
+
+// Returns true if the character was a valid BASE16 half-byte, and stores in buffer
+bool incomingCharacter(char inc)
+{
+    char tmp = 0;
+    if((inc >= 'A') && (inc <= 'F'))
+    {
+        tmp = inc - 'A' + 9;
+    }
+    else if((inc >= '0') && (inc <= '9'))
+    {
+        tmp = inc - '0';
+    }
+    else
+    {
+        // Not a valid BASE16 half-byte
+        return false;
+    }
+
+    // If first half of a byte
+    if((mRxBufferBytesCounter % 2) == 0)
+    {
+        mRxBuffer[mRxBufferBytesCounter / 2] = tmp;
+    }
+    // If second half of byte
+    else
+    {
+        mRxBuffer[mRxBufferBytesCounter / 2] |= (tmp << 4);
+    }
+
+    mRxBufferBytesCounter++;
+
+    return true;
+}
+
+
+void MessageParser::decodeMsgToQueue()
+{
+    // An uneven number of half-bytes indicates error
+    if((mRxBufferBytesCounter % 2) != 0)
+    {
+        rxError("Error: Odd number of half-bytes in a message");
+        return;
+    }
+
+    // An empty message is also an error
+    if(mRxBufferBytesCounter <= 0)
+    {
+        rxError("Error: Too few half-bytes in a message");
+        return;
+    }
+
+    RobotMessage tmpMsg;
+    tmpMsg.header = mRxBuffer[0];
+    tmpMsg.payloadlen = (mRxBufferBytesCounter / 2) - 1;
+
+    if(tmpMsg.payloadlen > 0)
+    {
+        memcpy(tmpMsg.payload, &(mRxBuffer[1]), tmpMsg.payloadlen);
+    }
 }
 
 void MessageParser::sendOutgoingData()
+{
+
+}
+
+void encodeMsgToBuffer()
 {
 
 }
@@ -166,4 +256,10 @@ MessageParser::~MessageParser()
 {
     stopThread();
     deinit();
+}
+
+void MessageParser::rxError(const char* msg)
+{
+    std::cout << msg << std::endl;
+    mRxBufferBytesCounter = 0;
 }

@@ -24,6 +24,7 @@
 struct RobotMessage
 {
     char header;
+    char payloadlen;
     char payload[UHEROBOT_BOARD_MSG_MAX_LEN_BYTES];
 };
 
@@ -45,9 +46,18 @@ private:
 
    void msgProcessingThread();
    void readIncomingData();
+   // Decodes the BASE16-encoded message and separated the header for easier consumption
+   void decodeMsgToQueue();
+   // Returns true if the character was a valid BASE16 half-byte, and stores in buffer
+   bool incomingCharacter(char inc);
    void sendOutgoingData();
+   void encodeMsgToBuffer();
+
+   void rxError(const char* msg);
+
 
    static const int TX_BUFF_LEN = ((UHEROBOT_BOARD_MSG_MAX_LEN_BYTES * 2) + 2) * 5;
+   static const int RX_BUFF_LEN = (UHEROBOT_BOARD_MSG_MAX_LEN_BYTES * 2) + 2;
    enum eThreadInstruction
    {
        RUN,
@@ -55,19 +65,28 @@ private:
        END
    };
 
-   // Class variables
-   termios mOldTtyDefinitions;
-   std::string mPortName;
-   int mPortNumber;
-   std::queue<RobotMessage> mRxMsgBuffer;
-   std::queue<RobotMessage> mTxMsgBuffer;
-   char mTxBuffer[TX_BUFF_LEN];
-   int mTxBufferBytes;
+   // --Class variables--
+   // Thread control
    volatile eThreadInstruction mThreadInstruction;
    volatile eThreadInstruction mThreadStatus;
 
+   // Serial port needs
+   termios mOldTtyDefinitions;
+   std::string mPortName;
+   int mPortNumber;
+
+   // Messaging
+   // RX side
+   std::queue<RobotMessage> mRxMsgBuffer;
    std::mutex mRxMsgBuffMutex;
+   char mRxBuffer[RX_BUFF_LEN];
+   int mRxBufferBytesCounter;
+
+   // TX side
+   std::queue<RobotMessage> mTxMsgBuffer;
    std::mutex mTxMsgBuffMutex;
+   char mTxBuffer[TX_BUFF_LEN];
+   int mTxBufferBytes;
 };
 
 
