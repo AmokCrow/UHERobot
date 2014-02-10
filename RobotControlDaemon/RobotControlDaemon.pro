@@ -9,5 +9,6 @@ SOURCES += main.cpp \
 
 HEADERS += \
     MessageParser.h \
-    ControlLogic.h
+    ControlLogic.h \
+    ../CommandList.h
 

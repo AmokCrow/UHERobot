@@ -2,7 +2,13 @@
 #include "MessageParser.h"
 
 MessageParser::MessageParser(const char* serialPort)
-   : mPortName(serialPort)
+   : mPortName(serialPort),
+     mRxMsgBuffer(),
+     mTxMsgBuffer(),
+     mThreadInstruction(END),
+     mRxMsgBuffMutex(),
+     mTxMsgBuffMutex(),
+     mTxBufferBytes(0)
 {
    init();
 }
@@ -49,18 +55,115 @@ void MessageParser::init()
    // Applies (or tries to) the attributes of the structure to the port.
    if(tcsetattr(portnum, TCSANOW, &tty ) != 0)
    {
-       cout << "Error " << errno << " from tcsetattr" << endl;
-       return;
+      cout << "Error " << errno << " from tcsetattr" << endl;
+      return;
    }
 }
 
 void MessageParser::deinit()
 {
-
+    int err = close(mPortNumber);
+    if(err != 0)
+    {
+        std::cout << "Error " << err << " from close():" << strerror(err) << std::endl;
+        return;
+    }
 }
 
 void MessageParser::reset()
 {
+   // Clear message buffers both ways
+    stopThread();
+
+   mRxMsgBuffer.clear();
+   mTxMsgBuffer.clear();
+
    deinit();
    init();
+
+   startThread();
+}
+
+int MessageParser::messagesAvailable()
+{
+    mRxMsgBuffMutex.lock();
+    int tmp = mRxMsgBuffer.size();
+    mRxMsgBuffMutex.unlock();
+    return tmp;
+}
+
+bool MessageParser::getMessage(const RobotMessage& msg)
+{
+    mRxMsgBuffMutex.lock();
+    if(mRxMsgBuffer.empty())
+    {
+        mRxMsgBuffMutex.unlock();
+        return false;
+    }
+
+    msg = mRxMsgBuffer.front();
+    mRxMsgBuffer.pop();
+    mRxMsgBuffMutex.unlock();
+    return true;
+}
+
+void MessageParser::sendMessage(const RobotMessage& msg)
+{
+    mTxMsgBuffMutex.lock();
+    mTxMsgBuffer.push(msg);
+    mRxMsgBuffMutex.unlock();
+}
+
+int MessageParser::getErrorStatus(std::string* = NULL)
+{
+    // TODO: implement error reporting
+    return 0;
+}
+
+void MessageParser::msgProcessingThread()
+{
+    while(1)
+    {
+        if(mThreadInstruction == RUN)
+        {
+            mThreadStatus = RUN;
+            readIncomingData();
+            sendOutgoingData();
+        }
+        else if(mThreadInstruction == SLEEP)
+        {
+            mThreadStatus = SLEEP;
+            // Sleep for 100ms (minimum, may sleep a lot longer depending on load)
+            usleep(100000L);
+        }
+        else
+        {
+            mThreadStatus = END;
+            break;
+        }
+
+    }
+}
+
+void MessageParser::readIncomingData()
+{
+    char buffer;
+    int numRead;
+    do
+    {
+        numRead = read(mPortNumber, &buffer, 1);
+        response.append( &buf );
+    }
+    while( buf != '\r' && n > 0);
+}
+
+void MessageParser::sendOutgoingData()
+{
+
+}
+
+MessageParser::~MessageParser()
+{
+    stopThread();
+    deinit();
 }
