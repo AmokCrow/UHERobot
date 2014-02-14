@@ -51,7 +51,8 @@ private:
    // Returns true if the character was a valid BASE16 half-byte, and stores in buffer
    bool incomingCharacter(char inc);
    void sendOutgoingData();
-   void encodeMsgToBuffer();
+   // Returns true if there was something in the buffer to decode. False otherwise.
+   bool encodeMsgToBuffer();
 
    void rxError(const char* msg);
 
@@ -87,6 +88,7 @@ private:
    std::mutex mTxMsgBuffMutex;
    char mTxBuffer[TX_BUFF_LEN];
    int mTxBufferBytes;
+   int mTxBufferPos;
 };
 
 

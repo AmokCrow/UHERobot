@@ -9,7 +9,8 @@ MessageParser::MessageParser(const char* serialPort)
      mRxMsgBuffMutex(),
      mTxMsgBuffMutex(),
      mRxBufferBytesCounter(0),
-     mTxBufferBytes(0)
+     mTxBufferBytes(0),
+     mTxBufferPos(0)
 {
    init();
 }
@@ -244,10 +245,23 @@ void MessageParser::decodeMsgToQueue()
 
 void MessageParser::sendOutgoingData()
 {
+    // Anything in the character buffer to send?
+    if(mTxBufferBytes <= 0)
+    {
+        // Nothing in character buffer, so try to get something from the queue.
+        if(encodeMsgToBuffer() == false)
+        {
+            // Nothing in either the  character buffer of the queue, so just return.
+            return;
+        }
+    }
 
+    int numWritten = write(mPortNumber, &mTxBuffer[mTxBufferPos], mTxBufferBytes);
+    mTxBufferBytes -= numWritten;
+    mTxBufferPos += numWritten;
 }
 
-void encodeMsgToBuffer()
+bool MessageParser::encodeMsgToBuffer()
 {
 
 }
