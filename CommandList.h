@@ -8,7 +8,9 @@ enum eControlChar
   END_OF_MESSAGE = 'e'
 };
 
+// Maximum message length in unencoded bytes, excluding the header byte(s).
 #define UHEROBOT_BOARD_MSG_MAX_LEN_BYTES 20
+#define UHEROBOT_BOARD_MSG_HEADER_MAX_LEN 1
 
 enum eRobotCommands
 {

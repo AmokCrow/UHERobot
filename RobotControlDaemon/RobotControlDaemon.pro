@@ -5,10 +5,12 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
     MessageParser.cpp \
-    ControlLogic.cpp
+    ControlLogic.cpp \
+    base16message.cpp
 
 HEADERS += \
     MessageParser.h \
     ControlLogic.h \
-    ../CommandList.h
+    ../CommandList.h \
+    base16message.h
 
