@@ -16,29 +16,33 @@
 #include <termios.h>    // POSIX terminal control definitions
 
 #include <string>
-#include <queue>
-#include <mutex>
+#include <vector>
+#include <thread>
 
 #include "../CommandList.h"
-
-struct RobotMessage
-{
-    char header;
-    char payloadlen;
-    char payload[UHEROBOT_BOARD_MSG_MAX_LEN_BYTES];
-};
+#include "base16message.h"
 
 class MessageParser
 {
+
 public:
+
+   typedef int (*MsgCallbackType)(Base16Message*, void*);
+
+   struct MsgSubscriber
+   {
+       MsgCallbackType addr;
+       void* userDataPtr;
+   };
+
    MessageParser(const char* serialPort);
    ~MessageParser();
+   void startThread();
+   void stopThread();
    void reset();
 
-   int messagesAvailable();
-   bool getMessage(const RobotMessage& msg);
-   void sendMessage(const RobotMessage& msg);
-   int getErrorStatus(std::string* = NULL);
+   bool sendMessage(Base16Message& msg);
+   bool subscribe(MsgCallbackType);
 
 private:
    void init();
@@ -46,19 +50,11 @@ private:
 
    void msgProcessingThread();
    void readIncomingData();
-   // Decodes the BASE16-encoded message and separated the header for easier consumption
-   void decodeMsgToQueue();
-   // Returns true if the character was a valid BASE16 half-byte, and stores in buffer
-   bool incomingCharacter(char inc);
-   void sendOutgoingData();
-   // Returns true if there was something in the buffer to decode. False otherwise.
-   bool encodeMsgToBuffer();
+   void notifySubscribers();
 
    void rxError(const char* msg);
+   bool resolveTxIssue();
 
-
-   static const int TX_BUFF_LEN = ((UHEROBOT_BOARD_MSG_MAX_LEN_BYTES * 2) + 2) * 5;
-   static const int RX_BUFF_LEN = (UHEROBOT_BOARD_MSG_MAX_LEN_BYTES * 2) + 2;
    enum eThreadInstruction
    {
        RUN,
@@ -70,25 +66,16 @@ private:
    // Thread control
    volatile eThreadInstruction mThreadInstruction;
    volatile eThreadInstruction mThreadStatus;
+   std::thread* mRxThreadPtr;
 
    // Serial port needs
    termios mOldTtyDefinitions;
    std::string mPortName;
    int mPortNumber;
 
-   // Messaging
-   // RX side
-   std::queue<RobotMessage> mRxMsgBuffer;
-   std::mutex mRxMsgBuffMutex;
-   char mRxBuffer[RX_BUFF_LEN];
-   int mRxBufferBytesCounter;
-
-   // TX side
-   std::queue<RobotMessage> mTxMsgBuffer;
-   std::mutex mTxMsgBuffMutex;
-   char mTxBuffer[TX_BUFF_LEN];
-   int mTxBufferBytes;
-   int mTxBufferPos;
+   // Message propagation
+   std::vector<MsgSubscriber> mSubscriberList;
+   Base16Message mMessage;
 };
 
 

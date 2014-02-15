@@ -3,14 +3,10 @@
 
 MessageParser::MessageParser(const char* serialPort)
    : mPortName(serialPort),
-     mRxMsgBuffer(),
-     mTxMsgBuffer(),
      mThreadInstruction(END),
-     mRxMsgBuffMutex(),
-     mTxMsgBuffMutex(),
-     mRxBufferBytesCounter(0),
-     mTxBufferBytes(0),
-     mTxBufferPos(0)
+     mThreadStatus(END),
+     mSubscriberList(),
+     mRxThreadPtr(NULL)
 {
    init();
 }
@@ -75,10 +71,7 @@ void MessageParser::deinit()
 void MessageParser::reset()
 {
    // Clear message buffers both ways
-    stopThread();
-
-   mRxMsgBuffer.clear();
-   mTxMsgBuffer.clear();
+   stopThread();
 
    deinit();
    init();
@@ -86,40 +79,24 @@ void MessageParser::reset()
    startThread();
 }
 
-int MessageParser::messagesAvailable()
+void MessageParser::startThread()
 {
-    mRxMsgBuffMutex.lock();
-    int tmp = mRxMsgBuffer.size();
-    mRxMsgBuffMutex.unlock();
-    return tmp;
-}
-
-bool MessageParser::getMessage(const RobotMessage& msg)
-{
-    mRxMsgBuffMutex.lock();
-    if(mRxMsgBuffer.empty())
+    if(mRxThreadPtr == NULL)
     {
-        mRxMsgBuffMutex.unlock();
-        return false;
+        mThreadInstruction = RUN;
+        mRxThreadPtr = new std::thread(msgProcessingThread, this);
     }
-
-    msg = mRxMsgBuffer.front();
-    mRxMsgBuffer.pop();
-    mRxMsgBuffMutex.unlock();
-    return true;
 }
 
-void MessageParser::sendMessage(const RobotMessage& msg)
+void MessageParser::stopThread()
 {
-    mTxMsgBuffMutex.lock();
-    mTxMsgBuffer.push(msg);
-    mRxMsgBuffMutex.unlock();
-}
-
-int MessageParser::getErrorStatus(std::string* = NULL)
-{
-    // TODO: implement error reporting
-    return 0;
+    if(mRxThreadPtr != NULL)
+    {
+        mThreadInstruction = END;
+        mRxThreadPtr->join();
+        delete mRxThreadPtr;
+        mRxThreadPtr = NULL;
+    }
 }
 
 void MessageParser::msgProcessingThread()
@@ -130,7 +107,6 @@ void MessageParser::msgProcessingThread()
         {
             mThreadStatus = RUN;
             readIncomingData();
-            sendOutgoingData();
         }
         else if(mThreadInstruction == SLEEP)
         {
@@ -149,121 +125,55 @@ void MessageParser::msgProcessingThread()
 
 void MessageParser::readIncomingData()
 {
-    char buffer;
-    int numRead;
-    while(1)
+    char buffer[20];
+
+    int numRead = read(mPortNumber, buffer, 20);
+    int buffPos = 0;
+    int numLeft = numRead;
+
+    while(numRead > 0)
     {
-        numRead = read(mPortNumber, &buffer, 1);
-        if(numRead == 0)
+        if(mMessage.feedRawMsgBuff(&(buffer[buffPos]), numLeft) == FINISHED)
         {
-            break;
+            notifySubscribers();
         }
-        else if(numRead < 0)
+        buffPos = numRead - numLeft;
+    }
+}
+
+void MessageParser::notifySubscribers()
+{
+    for(int i = 0; i < mSubscriberList; i++)
+    {
+        *(mSubscriberList.at(i).addr)(&mMessage, mSubscriberList.at(i).userData);
+    }
+}
+
+bool MessageParser::sendMessage(Base16Message& msg)
+{
+    char* const buffPtr = msg.encodedBytesPtr();
+    int numBytes = msg.encodedLength();
+
+    while(numBytes > 0)
+    {
+        int numWritten = write(mPortNumber, buffPtr, numBytes);
+        buffPtr += numWritten;
+        numBytes -= numWritten;
+
+        if(numWritten <= 0)
         {
-            // I don't count this as an RX error yet, since I'm not sure if this happens whenever there are simply no characters to read.
-            std::cout << "Error: read() returned less than 0" << std::endl;
-            break;
-        }
-        else if(buffer == eControlChar::CLEAR_BUFFER)
-        {
-            mRxBufferBytesCounter = 0;
-        }
-        else if(buffer == eControlChar::END_OF_MESSAGE)
-        {
-            decodeMsgToQueue();
-        }
-        else
-        {
-            if(!incomingCharacter(buffer))
+            if(resolveTxIssue() == false)
             {
-                rxError("Error: Unknown character");
+                return;
             }
+
         }
     }
 }
 
-// Returns true if the character was a valid BASE16 half-byte, and stores in buffer
-bool incomingCharacter(char inc)
+bool MessageParser::resolveTxIssue()
 {
-    char tmp = 0;
-    if((inc >= 'A') && (inc <= 'F'))
-    {
-        tmp = inc - 'A' + 9;
-    }
-    else if((inc >= '0') && (inc <= '9'))
-    {
-        tmp = inc - '0';
-    }
-    else
-    {
-        // Not a valid BASE16 half-byte
-        return false;
-    }
-
-    // If first half of a byte
-    if((mRxBufferBytesCounter % 2) == 0)
-    {
-        mRxBuffer[mRxBufferBytesCounter / 2] = tmp;
-    }
-    // If second half of byte
-    else
-    {
-        mRxBuffer[mRxBufferBytesCounter / 2] |= (tmp << 4);
-    }
-
-    mRxBufferBytesCounter++;
-
     return true;
-}
-
-
-void MessageParser::decodeMsgToQueue()
-{
-    // An uneven number of half-bytes indicates error
-    if((mRxBufferBytesCounter % 2) != 0)
-    {
-        rxError("Error: Odd number of half-bytes in a message");
-        return;
-    }
-
-    // An empty message is also an error
-    if(mRxBufferBytesCounter <= 0)
-    {
-        rxError("Error: Too few half-bytes in a message");
-        return;
-    }
-
-    RobotMessage tmpMsg;
-    tmpMsg.header = mRxBuffer[0];
-    tmpMsg.payloadlen = (mRxBufferBytesCounter / 2) - 1;
-
-    if(tmpMsg.payloadlen > 0)
-    {
-        memcpy(tmpMsg.payload, &(mRxBuffer[1]), tmpMsg.payloadlen);
-    }
-}
-
-void MessageParser::sendOutgoingData()
-{
-    // Anything in the character buffer to send?
-    if(mTxBufferBytes <= 0)
-    {
-        // Nothing in character buffer, so try to get something from the queue.
-        if(encodeMsgToBuffer() == false)
-        {
-            // Nothing in either the  character buffer of the queue, so just return.
-            return;
-        }
-    }
-
-    int numWritten = write(mPortNumber, &mTxBuffer[mTxBufferPos], mTxBufferBytes);
-    mTxBufferBytes -= numWritten;
-    mTxBufferPos += numWritten;
-}
-
-bool MessageParser::encodeMsgToBuffer()
-{
-
 }
 
 MessageParser::~MessageParser()
