@@ -22,11 +22,13 @@ class Base16Message
 
     char getHeaderByte(int byteNum);
     char* const encodedBytesPtr();
+    int encodedLength();
+    int decodedLength();
     char* const decodedBytesPtr();
 
     bool isValid();
 
-    bool setHeader(const char * const header, int headerLen);
+    bool setHeader(const char * const header);
     bool setBody(const char * const msg, int msgLen);
 
     enum eMsgStates {
@@ -41,7 +43,16 @@ class Base16Message
     //  the buffer was consumed. The return value will tell which one of these happened.
     eMsgStates feedRawMsgBuff(const char* const rawBuff, int& buffBytes);
 
+    bool encode();
+    bool decode();
+
   private:
+
+    void putByteToRawBuff(char ch);
+    void byteToB16(char src, char* dest);
+    char B16ToByte(const char * const src);
+
+    void classyError(const char* const msg);
 
     static const int MAX_MSG_LEN = UHEROBOT_BOARD_MSG_MAX_LEN_BYTES;
     static const int MAX_MSG_HEADER_LEN = UHEROBOT_BOARD_MSG_HEADER_MAX_LEN;
