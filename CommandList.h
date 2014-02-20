@@ -16,7 +16,7 @@ enum eRobotCommands
 {
     SET_MOTORS = 0,
     SET_SERVOS = 1,
-    HEARTBEAT = 2,
+    CONTROLLER_HEARTBEAT = 2,
     ERROR = 3,
     GET_ANALOG_READING = 4,
     SET_DIGITAL_PIN = 5,
@@ -25,7 +25,7 @@ enum eRobotCommands
 
 enum eRobotResponses
 {
-    HEARTBEAT = 0,
+    ROBOT_HEARTBEAT = 0,
     ANALOG_READING = 1
 };
 

@@ -1,12 +1,13 @@
 
 #include "MessageParser.h"
+#include <iostream>
 
 MessageParser::MessageParser(const char* serialPort)
-   : mPortName(serialPort),
-     mThreadInstruction(END),
+   : mThreadInstruction(END),
      mThreadStatus(END),
-     mSubscriberList(),
-     mRxThreadPtr(NULL)
+     mRxThreadPtr(NULL),
+     mPortName(serialPort),
+     mSubscriberList()
 {
    init();
 }
@@ -53,7 +54,7 @@ void MessageParser::init()
    // Applies (or tries to) the attributes of the structure to the port.
    if(tcsetattr(portnum, TCSANOW, &tty ) != 0)
    {
-      cout << "Error " << errno << " from tcsetattr" << endl;
+      std::cout << "Error " << errno << " from tcsetattr" << std::endl;
       return;
    }
 }
@@ -84,7 +85,7 @@ void MessageParser::startThread()
     if(mRxThreadPtr == NULL)
     {
         mThreadInstruction = RUN;
-        mRxThreadPtr = new std::thread(msgProcessingThread, this);
+        mRxThreadPtr = new std::thread(&MessageParser::msgProcessingThread, this);
     }
 }
 
@@ -133,7 +134,7 @@ void MessageParser::readIncomingData()
 
     while(numRead > 0)
     {
-        if(mMessage.feedRawMsgBuff(&(buffer[buffPos]), numLeft) == FINISHED)
+        if(mMessage.feedRawMsgBuff(&(buffer[buffPos]), numLeft) == Base16Message::FINISHED)
         {
             notifySubscribers();
         }
@@ -143,15 +144,15 @@ void MessageParser::readIncomingData()
 
 void MessageParser::notifySubscribers()
 {
-    for(int i = 0; i < mSubscriberList; i++)
+    for(unsigned int i = 0; i < mSubscriberList.size(); i++)
     {
-        *(mSubscriberList.at(i).addr)(&mMessage, mSubscriberList.at(i).userData);
+        mSubscriberList.at(i).addr(&mMessage, mSubscriberList.at(i).userDataPtr);
     }
 }
 
 bool MessageParser::sendMessage(Base16Message& msg)
 {
-    char* const buffPtr = msg.encodedBytesPtr();
+    const char* buffPtr = msg.encodedBytesPtr();
     int numBytes = msg.encodedLength();
 
     while(numBytes > 0)
@@ -164,15 +165,18 @@ bool MessageParser::sendMessage(Base16Message& msg)
         {
             if(resolveTxIssue() == false)
             {
-                return;
+                return false;
             }
 
         }
     }
+
+    return true;
 }
 
 bool MessageParser::resolveTxIssue()
 {
+    rxError("Transmission failure");
     return true;
 }
 
@@ -184,6 +188,5 @@ MessageParser::~MessageParser()
 
 void MessageParser::rxError(const char* msg)
 {
-    std::cout << msg << std::endl;
-    mRxBufferBytesCounter = 0;
+    std::cout << "MessageParser: Error: " << msg << std::endl;
 }

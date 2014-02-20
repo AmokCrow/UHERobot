@@ -14,16 +14,22 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "MessageParser.h"
 
 
 class ControlLogic
 {
 public:
   ControlLogic(const char* pipeName, const char* serialPort);
+
+  void run();
   
 private:
+
+  bool mShouldRun;
  
-int serialFileDescriptor;
+  int serialFileDescriptor;
+  MessageParser serialChannel;
  
     
 

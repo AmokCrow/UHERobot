@@ -21,10 +21,10 @@ class Base16Message
     Base16Message();
 
     char getHeaderByte(int byteNum);
-    char* const encodedBytesPtr();
+    const char* encodedBytesPtr();
     int encodedLength();
     int decodedLength();
-    char* const decodedBytesPtr();
+    const char* decodedBytesPtr();
 
     bool isValid();
 
@@ -41,7 +41,7 @@ class Base16Message
     // The buffBytes argument referred to is updated to contain the number of bytes
     //  not handled before either a message was completed, an error encountered or
     //  the buffer was consumed. The return value will tell which one of these happened.
-    eMsgStates feedRawMsgBuff(const char* const rawBuff, int& buffBytes);
+    eMsgStates feedRawMsgBuff(const char* rawBuff, int& buffBytes);
 
     bool encode();
     bool decode();
@@ -51,6 +51,7 @@ class Base16Message
     void putByteToRawBuff(char ch);
     void byteToB16(char src, char* dest);
     char B16ToByte(const char * const src);
+    void clear();
 
     void classyError(const char* const msg);
 

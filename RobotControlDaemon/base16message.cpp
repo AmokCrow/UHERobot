@@ -1,5 +1,6 @@
 #include "base16message.h"
 
+#include <cstring>
 #include <string>
 #include <iostream>
 
@@ -19,15 +20,16 @@ char Base16Message::getHeaderByte(int byteNum)
     mHeader[byteNum];
 }
 
-char* const Base16Message::encodedBytesPtr()
+const char* Base16Message::encodedBytesPtr()
 {
     if(mIsEncoded)
     {
-        return mEncodedBuff;
+        return (const char*)mEncodedBuff;
     }
     else if(mIsDecoded)
     {
         encode();
+        return (const char* const)mEncodedBuff;
     }
     else
     {
@@ -35,15 +37,16 @@ char* const Base16Message::encodedBytesPtr()
     }
 }
 
-char* const Base16Message::decodedBytesPtr()
+const char* Base16Message::decodedBytesPtr()
 {
     if(mIsDecoded)
     {
-        return mUnencodedBuff;
+        return (const char*)mUnencodedBuff;
     }
     else if(mIsEncoded)
     {
         decode();
+        return (const char*)mUnencodedBuff;
     }
     else
     {
@@ -104,7 +107,7 @@ bool Base16Message::setBody(const char * const msg, int msgLen)
     return isValid();
 }
 
-eMsgStates Base16Message::feedRawMsgByte(char rawByte)
+Base16Message::eMsgStates Base16Message::feedRawMsgByte(char rawByte)
 {
     // There was already a message here. Clear it and continue receiving.
     if(mIsEncoded)
@@ -178,20 +181,10 @@ void Base16Message::classyError(const char* const msg)
     std::cout << "Base16Message: Error: " << msg << std::endl;
 }
 
-void Base16Message::clear()
-{
-    mNumBytesEncoded = 0;
-    mNumBytesUnencoded = 0;
-    mIsEncoded = false;
-    mIsDecoded = false;
-    mHasData = false;
-    mHasHeader = false;
-}
-
 // The buffBytes argument referred to is updated to contain the number of bytes
 //  not handled before either a message was completed, an error encountered or
 //  the buffer was consumed. The return value will tell which one of these happened.
-eMsgStates Base16Message::feedRawMsgBuff(const char* const rawBuff, int& buffBytes)
+Base16Message::eMsgStates Base16Message::feedRawMsgBuff(const char* rawBuff, int& buffBytes)
 {
     int buffPos = 0;
     eMsgStates lastState = CONTINUE;
@@ -295,7 +288,7 @@ void Base16Message::putByteToRawBuff(char ch)
     mNumBytesEncoded++;
 }
 
-void byteToB16(char src, char* dest)
+void Base16Message::byteToB16(char src, char* dest)
 {
     char tmp = ((src & 0xF0) >> 4);
 
@@ -324,7 +317,7 @@ void byteToB16(char src, char* dest)
     dest[1] = tmp;
 }
 
-char B16ToByte(const char * const src)
+char Base16Message::B16ToByte(const char * const src)
 {
     char returnables[2];
 
@@ -348,4 +341,13 @@ char B16ToByte(const char * const src)
     return (returnables[0] << 4) | returnables[1];
 }
 
+void Base16Message::clear()
+{
+    mNumBytesUnencoded = 0;
+    mNumBytesEncoded = 0;
+    mIsEncoded = false;
+    mIsDecoded = false;
+    mHasHeader = false;
+    mHasData = false;
+}
 
