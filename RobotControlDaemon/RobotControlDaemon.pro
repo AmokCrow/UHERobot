@@ -8,11 +8,13 @@ QMAKE_CXXFLAGS += -std=c++11
 SOURCES += main.cpp \
     MessageParser.cpp \
     ControlLogic.cpp \
-    base16message.cpp
+    base16message.cpp \
+    pipemessager.cpp
 
 HEADERS += \
     MessageParser.h \
     ControlLogic.h \
     ../CommandList.h \
-    base16message.h
+    base16message.h \
+    pipemessager.h
 
