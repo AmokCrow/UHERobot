@@ -1,0 +1,9 @@
+
+src_files = [
+   'main.cpp'
+]
+
+
+
+Program(target = 'FCGItest', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread'])
+
