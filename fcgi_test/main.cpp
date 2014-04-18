@@ -22,10 +22,9 @@ static const char rcsid[] = "$Id: threaded.c,v 1.9 2001/11/20 03:23:21 robs Exp 
 
 static int counts[THREAD_COUNT];
 
-static void *doit(void *a)
+static void *doit(int a)
 {
     long int rc, thread_id = (long int)a;
-    void* i = a;
     
     pid_t pid = getpid();
     FCGX_Request request;
@@ -61,8 +60,16 @@ static void *doit(void *a)
 
         pthread_mutex_lock(&counts_mutex);
         ++counts[thread_id];
-        for (i = 0; i < THREAD_COUNT; i++)
-            FCGX_FPrintF(request.out, "%5d " , counts[i]);
+        for (int numt = 0; numt < THREAD_COUNT; numt++)
+            FCGX_FPrintF(request.out, "%5d " , counts[numt]);
+        
+        FCGX_FPrintF(request.out, "<p>");
+        for(int u = 0; request.envp[u]; u++)
+        {
+            FCGX_FPrintF(request.out, "%s<br>", request.envp[u]);
+        }
+        FCGX_FPrintF(request.out, "</p>");
+        
         pthread_mutex_unlock(&counts_mutex);
 
         FCGX_Finish_r(&request);
@@ -75,11 +82,16 @@ int main(void)
 {
     int i;
     pthread_t id[THREAD_COUNT];
+    int tnums[THREAD_COUNT];
 
     FCGX_Init();
 
+    /*
     for (i = 1; i < THREAD_COUNT; i++)
-        pthread_create(&id[i], NULL, doit, i);
+    {
+        pthread_create(&id[i], NULL, doit, (void*)NULL + i);
+    }
+    */
 
     doit(0);
 

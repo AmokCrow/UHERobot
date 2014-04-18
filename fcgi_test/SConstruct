@@ -5,5 +5,5 @@ src_files = [
 
 
 
-Program(target = 'FCGItest', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread'])
+Program(target = 'FCGItest', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread', 'cgicc'])
 

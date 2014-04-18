@@ -9,12 +9,15 @@ SOURCES += main.cpp \
     MessageParser.cpp \
     ControlLogic.cpp \
     base16message.cpp \
-    pipemessager.cpp
+    pipemessager.cpp \
+    fcgiServer/fcgiserver.cpp
 
 HEADERS += \
     MessageParser.h \
     ControlLogic.h \
     ../CommandList.h \
     base16message.h \
-    pipemessager.h
+    pipemessager.h \
+    fcgiServer/fcgiserver.h \
+    fcgiServer/fcgiserviceif.h
 
