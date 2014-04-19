@@ -20,7 +20,7 @@ public:
     };
 
     virtual ~FcgiServiceIf();
-    const PrintableParam** serveCall(const std::string& query) = 0;
+    virtual const PrintableParam* serveCall(const std::string& query) = 0;
 
 };
 

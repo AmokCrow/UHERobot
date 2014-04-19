@@ -17,6 +17,7 @@ void MessageParser::init()
    // Opening a file handle the C way. The whole serial interface is in C, I guess.
    // I cound not find documentation for the O_NOCTTY, but I think it has to do with disabling echo and other console features.
    int portnum = open(mPortName.c_str(), O_RDWR | O_NOCTTY);
+   mPortNumber = portnum;
    
    termios tty;
    memset (&tty, 0, sizeof tty); // TODO: Check if this is really needed, with tcgetattr on the next line.

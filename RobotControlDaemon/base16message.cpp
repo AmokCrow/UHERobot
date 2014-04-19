@@ -17,7 +17,7 @@ Base16Message::Base16Message()
 
 char Base16Message::getHeaderByte(int byteNum)
 {
-    mHeader[byteNum];
+    return mHeader[byteNum];
 }
 
 const char* Base16Message::encodedBytesPtr()
@@ -98,6 +98,7 @@ bool Base16Message::setBody(const char * const msg, int msgLen)
     memcpy(mUnencodedBuff, msg, msgLen);
 
     mHasData = true;
+    mNumBytesUnencoded = msgLen;
 
     if(mHasHeader)
     {
@@ -116,7 +117,7 @@ Base16Message::eMsgStates Base16Message::feedRawMsgByte(char rawByte)
     }
 
     // End of message. Try to decode it.
-    if(rawByte == 's')
+    if(rawByte == 'e')
     {
         putByteToRawBuff(rawByte);
 
@@ -222,9 +223,11 @@ bool Base16Message::encode()
         mNumBytesEncoded += 2;
     }
 
-    mEncodedBuff[mNumBytesEncoded] = 's';
+    mEncodedBuff[mNumBytesEncoded] = 'e';
 
     mNumBytesEncoded++;
+
+    return true;
 }
 
 bool Base16Message::decode()

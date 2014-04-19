@@ -28,11 +28,11 @@ FcgiServer::~FcgiServer()
 
 void FcgiServer::start()
 {
-    threadM = std::thread(&FcgiServer::run, this, nextThreadNum);
+    threadM = std::thread(&FcgiServer::run, this);
     FCGX_InitRequest(&requestM, 0, 0);
 }
 
-void FcgiServer::run(unsigned int threadNum)
+void FcgiServer::run()
 {
     std::string query;
     std::string uri;
@@ -41,9 +41,9 @@ void FcgiServer::run(unsigned int threadNum)
     {
         uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
-        const FcgiServiceIf::PrintableParam* par = pClientM->serveCall(params);
+        const FcgiServiceIf::PrintableParam* par = pClientM->serveCall(query);
 
-        if(string::npos == uri.find("api"))
+        if(std::string::npos == uri.find("api"))
         {
             // Serve with JSON
         }

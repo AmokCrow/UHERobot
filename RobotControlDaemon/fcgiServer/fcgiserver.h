@@ -21,7 +21,7 @@ public:
     void start();
 private:
 
-    void run(unsigned int threadNum);
+    void run();
 
     FcgiServiceIf* pClientM;
 

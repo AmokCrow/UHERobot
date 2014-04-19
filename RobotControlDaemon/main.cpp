@@ -5,7 +5,7 @@
 
 int main()
 {
-    ControlLogic logic("logicpipe", "/dev/ttyAMA0");
+    ControlLogic logic("logicpipe", "/dev/ttyACM0");
 
     logic.run();
 
