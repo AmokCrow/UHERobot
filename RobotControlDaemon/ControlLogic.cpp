@@ -6,10 +6,44 @@
 
 #include <iostream>
 
-ControlLogic::ControlLogic(const char* pipeName, const char* serialPort)
-    : serialChannel(serialPort)
-{
+using namespace JsWebUtils;
 
+ControlLogic::ControlLogic(const char* serialPort)
+    : serialChannel(serialPort)
+    , mServer(this)
+{
+    webTextList = new FcgiServiceIf::PrintableParam;
+    webTextList->name = "Battery: ";
+    webTextList->value = battVoltageBuff;
+    battVoltageBuff[0] = 0;
+
+    webTextList->next = new FcgiServiceIf::PrintableParam;
+    FcgiServiceIf::PrintableParam* pTmp = webTextList->next;
+    pTmp->name = "Current: ";
+    pTmp->value = devCurrentBuff;
+    devCurrentBuff[0] = 0;
+
+    pTmp->next = new FcgiServiceIf::PrintableParam;
+    pTmp = pTmp->next;
+    pTmp->name = "Status: ";
+    pTmp->value = devCurrentBuff;
+
+    pStatusField = pTmp;
+
+    /*
+     *battVoltageBuff[PARAM_BUFFERS_LENGTH];
+  char devCurrentBuff[PARAM_BUFFERS_LENGTH];
+  */
+}
+
+ControlLogic::~ControlLogic()
+{
+    while(webTextList != NULL)
+    {
+        FcgiServiceIf::PrintableParam* pTmp = webTextList->next;
+        delete webTextList;
+        webTextList = pTmp;
+    }
 }
 
 void ControlLogic::run()
@@ -62,5 +96,19 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
                   << (int)(msg->decodedBytesPtr()[0])
                   << " " << (int)(msg->decodedBytesPtr()[1]) << std::endl;
     }
+}
+
+const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& query)
+{
+    if(query.find("forward") != std::string::npos)
+    {
+        pStatusField->value = "Moving - Forward";
+    }
+    else
+    {
+        pStatusField->value = "Error";
+    }
+
+    return webTextList;
 }
 

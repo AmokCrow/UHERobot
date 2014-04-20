@@ -49,7 +49,7 @@ void FcgiServer::run()
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
         const FcgiServiceIf::PrintableParam* par = pClientM->serveCall(query);
 
-        if(std::string::npos == uri.find("api"))
+        if(std::string::npos != uri.find("api"))
         {
             // Serve with JSON
         }

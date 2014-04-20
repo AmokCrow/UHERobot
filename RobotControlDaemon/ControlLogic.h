@@ -15,26 +15,38 @@
 #include <unistd.h>
 
 #include "MessageParser.h"
+#include "fcgiServer/fcgiserviceif.h"
+#include "fcgiServer/fcgiserver.h"
 
+using namespace JsWebUtils;
 
-class ControlLogic
+class ControlLogic : public FcgiServiceIf
 {
 public:
-  ControlLogic(const char* pipeName, const char* serialPort);
+  ControlLogic(const char* serialPort);
+  virtual ~ControlLogic();
 
   void run();
 
   void msgRxNotification(Base16Message* msg);
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
+
+  virtual const FcgiServiceIf::PrintableParam* serveCall(const std::string& query);
   
 private:
 
   bool mShouldRun;
- 
+
   int serialFileDescriptor;
   MessageParser serialChannel;
- 
-    
+
+  FcgiServer mServer;
+  FcgiServiceIf::PrintableParam* webTextList;
+  FcgiServiceIf::PrintableParam* pStatusField;
+
+  static const int PARAM_BUFFERS_LENGTH = 20;
+  char battVoltageBuff[PARAM_BUFFERS_LENGTH];
+  char devCurrentBuff[PARAM_BUFFERS_LENGTH];
 
 };
 
