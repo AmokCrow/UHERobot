@@ -272,7 +272,7 @@ bool Base16Message::decode()
     mIsEncoded = true;
     mIsDecoded = true;
 
-    mNumBytesUnencoded = dataPos;
+    mNumBytesUnencoded = dataPos - 1;
 
     return true;
 }
@@ -328,7 +328,7 @@ char Base16Message::B16ToByte(const char * const src)
     {
         char tmp = src[i];
 
-        if((tmp > '0') && (tmp < '9'))
+        if((tmp >= '0') && (tmp <= '9'))
         {
             tmp -= '0';
         }

@@ -133,8 +133,9 @@ void MessageParser::readIncomingData()
     int buffPos = 0;
     int numLeft = numRead;
 
-    while(numRead > 0)
+    while(numLeft > 0)
     {
+        // Numleft is updated by the method to reflect the remaining undigested data
         if(mMessage.feedRawMsgBuff(&(buffer[buffPos]), numLeft) == Base16Message::FINISHED)
         {
             notifySubscribers();
@@ -143,11 +144,19 @@ void MessageParser::readIncomingData()
     }
 }
 
+bool MessageParser::subscribe(MsgCallbackType cbaFunc, void* usrData)
+{
+    MsgSubscriber tmp;
+    tmp.addr = cbaFunc;
+    tmp.userDataPtr = usrData;
+    mSubscriberList.push_back(tmp);
+}
+
 void MessageParser::notifySubscribers()
 {
     for(unsigned int i = 0; i < mSubscriberList.size(); i++)
     {
-        mSubscriberList.at(i).addr(&mMessage, mSubscriberList.at(i).userDataPtr);
+        mSubscriberList.at(i).addr(mSubscriberList.at(i).userDataPtr, &mMessage);
     }
 }
 

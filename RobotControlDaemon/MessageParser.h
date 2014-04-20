@@ -22,12 +22,12 @@
 #include "../CommandList.h"
 #include "base16message.h"
 
+typedef void (*MsgCallbackType)(void*, Base16Message*);
+
 class MessageParser
 {
 
 public:
-
-   typedef int (*MsgCallbackType)(Base16Message*, void*);
 
    struct MsgSubscriber
    {
@@ -42,7 +42,7 @@ public:
    void reset();
 
    bool sendMessage(Base16Message& msg);
-   bool subscribe(MsgCallbackType);
+   bool subscribe(MsgCallbackType cbaFunc, void* usrData);
 
 private:
    void init();

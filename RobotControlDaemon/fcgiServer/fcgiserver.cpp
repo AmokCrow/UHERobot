@@ -32,6 +32,12 @@ void FcgiServer::start()
     FCGX_InitRequest(&requestM, 0, 0);
 }
 
+void FcgiServer::stop()
+{
+    FCGX_ShutdownPending();
+    threadM.join();
+}
+
 void FcgiServer::run()
 {
     std::string query;

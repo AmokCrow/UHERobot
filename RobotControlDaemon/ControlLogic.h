@@ -23,6 +23,9 @@ public:
   ControlLogic(const char* pipeName, const char* serialPort);
 
   void run();
+
+  void msgRxNotification(Base16Message* msg);
+  static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
   
 private:
 

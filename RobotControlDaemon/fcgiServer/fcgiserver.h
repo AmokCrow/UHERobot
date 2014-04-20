@@ -19,6 +19,8 @@ public:
     virtual ~FcgiServer();
 
     void start();
+    void stop();
+
 private:
 
     void run();
