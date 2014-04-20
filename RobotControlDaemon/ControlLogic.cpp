@@ -5,6 +5,7 @@
 #include "base16message.h"
 
 #include <iostream>
+#include <cstdio>
 
 using namespace JsWebUtils;
 
@@ -15,18 +16,18 @@ ControlLogic::ControlLogic(const char* serialPort)
     webTextList = new FcgiServiceIf::PrintableParam;
     webTextList->name = "Battery: ";
     webTextList->value = battVoltageBuff;
-    battVoltageBuff[0] = 0;
+    sprintf(battVoltageBuff, "empty");
 
     webTextList->next = new FcgiServiceIf::PrintableParam;
     FcgiServiceIf::PrintableParam* pTmp = webTextList->next;
     pTmp->name = "Current: ";
     pTmp->value = devCurrentBuff;
-    devCurrentBuff[0] = 0;
+    sprintf(devCurrentBuff, "none");
 
     pTmp->next = new FcgiServiceIf::PrintableParam;
     pTmp = pTmp->next;
     pTmp->name = "Status: ";
-    pTmp->value = devCurrentBuff;
+    pTmp->value = "erroneous";
 
     pStatusField = pTmp;
 
@@ -63,7 +64,9 @@ void ControlLogic::run()
     message.setBody(&(tmpBuff[1]), 2);
     message.encode();
 
-    while(roundCounter < 20)
+    mServer.start();
+
+    while(roundCounter < 40)
     {
         usleep(1000000L);
         serialChannel.sendMessage(message);
@@ -72,21 +75,21 @@ void ControlLogic::run()
     }
 
     serialChannel.stopThread();
-
+    mServer.stop();
 }
 
 void ControlLogic::msgRxNotification(Base16Message* msg)
 {
-    std::cout << "Message:" << std::endl;
-    std::cout << "  Header: 0:" << (int)msg->getHeaderByte(0) << " , 1:" << (int)msg->getHeaderByte(1) << std::endl;
+ //   std::cout << "Message:" << std::endl;
+ //   std::cout << "  Header: 0:" << (int)msg->getHeaderByte(0) << " , 1:" << (int)msg->getHeaderByte(1) << std::endl;
     int length = msg->decodedLength();
-    std::cout << "  Body(" << length << "):";
+ //   std::cout << "  Body(" << length << "):";
 
-    for(int i = 0; i < length; i++)
-    {
-        std::cout << " " << (int)(msg->decodedBytesPtr()[i]);
-    }
-    std::cout << std::endl << std::endl;
+ //   for(int i = 0; i < length; i++)
+ //   {
+ //       std::cout << " " << (int)(msg->decodedBytesPtr()[i]);
+ //   }
+ //   std::cout << std::endl << std::endl;
 
     if(msg->getHeaderByte(0) == ANALOG_READING)
     {
@@ -100,6 +103,7 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
 
 const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& query)
 {
+    std::cout << "ControlLogic";
     if(query.find("forward") != std::string::npos)
     {
         pStatusField->value = "Moving - Forward";

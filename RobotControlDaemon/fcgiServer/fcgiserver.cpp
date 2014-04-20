@@ -10,6 +10,8 @@
 #include <fcgi_config.h>
 #include <string>
 
+#include <iostream>
+
 namespace JsWebUtils
 {
 
@@ -47,8 +49,9 @@ void FcgiServer::run()
     {
         uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
+        std::cout << "Got request. URI: " << uri << "QUERY: " << query << std::endl;
         const FcgiServiceIf::PrintableParam* par = pClientM->serveCall(query);
-
+        std::cout << "Served" << std::endl;
         if(std::string::npos != uri.find("api"))
         {
             // Serve with JSON
@@ -60,11 +63,12 @@ void FcgiServer::run()
             FCGX_FPrintF(requestM.out, "<h1>Server says</h1>\r\n<p>\r\n");
             for(; par != NULL; par = par->next)
             {
-                FCGX_FPrintF(requestM.out, "%s: %s<br>\r\n", par->name, par->value);
+                std::cout << par->name << std::endl;
+                FCGX_FPrintF(requestM.out, "%s : %s <br>\r\n", par->name, par->value);
             }
             FCGX_FPrintF(requestM.out, "</p>\r\n");
         }
-
+        std::cout << "Finished" << std::endl;
         FCGX_Finish_r(&requestM);
 
     }
