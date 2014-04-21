@@ -1,5 +1,5 @@
-#include <Wire.h>
 
+#include <Wire.h>
 #include "MotorControlLib.h"
 
 void SeeedMC::init(uint8_t addr)
@@ -67,5 +67,6 @@ void SeeedMC::MotorDriectionAndSpeedSet(unsigned char Direction,unsigned char Mo
   MotorDirectionSet(Direction);
   MotorSpeedSetAB(MotorSpeedA,MotorSpeedB);  
 }
+
 
 

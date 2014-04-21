@@ -2,7 +2,6 @@
 #include "MotorControlLib.h"
 #include "CommandReceiver.h"
 #include <Wire.h>
-#include <Serial.h>
 #include <Servo.h>
 
 
@@ -88,3 +87,4 @@ void serialEvent()
     
  }
 }
+

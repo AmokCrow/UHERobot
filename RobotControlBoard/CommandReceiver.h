@@ -41,3 +41,4 @@ private:
 };
 
 #endif // COMMAND_RECEIVER__H
+

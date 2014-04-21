@@ -12,5 +12,5 @@ env = Environment()
 
 env.Append(CPPFLAGS='-std=c++11')
 
-env.Program(target = 'RobotControlDaemon', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread', 'cgicc'])
+env.Program(target = 'RobotControlDaemon', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread'])
 
