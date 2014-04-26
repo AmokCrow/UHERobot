@@ -13,6 +13,10 @@ ControlLogic::ControlLogic(const char* serialPort, float speedChangeRate)
     : serialChannel(serialPort)
     , mServer(this)
     , cfRateOfChangeM(speedChangeRate)
+    , fTargetSpeedLeftM(0.0f)
+    , fTargetSpeedRightM(0.0f)
+    , fCurrSpeedLeftM(0.0f)
+    , fCurrSpeedRightM(0.0f)
 {
     webTextList = new FcgiServiceIf::PrintableParam;
     webTextList->name = "Battery: ";
@@ -133,7 +137,17 @@ const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& 
     return webTextList;
 }
 
-void FcgiServiceIf::recalculateCurrentSpeedCommand()
+void ControlLogic::setTargetSpeed(float leftTrack, float rightTrack)
+{
+
+}
+
+void ControlLogic::recalculateCurrentSpeedCommand()
+{
+
+}
+
+void ControlLogic::sendSpeedsCommand(float leftTrackSpeed, float rightTrackSpeed)
 {
 
 }
