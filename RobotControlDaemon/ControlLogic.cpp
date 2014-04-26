@@ -9,9 +9,10 @@
 
 using namespace JsWebUtils;
 
-ControlLogic::ControlLogic(const char* serialPort)
+ControlLogic::ControlLogic(const char* serialPort, float speedChangeRate)
     : serialChannel(serialPort)
     , mServer(this)
+    , cfRateOfChangeM(speedChangeRate)
 {
     webTextList = new FcgiServiceIf::PrintableParam;
     webTextList->name = "Battery: ";
@@ -103,16 +104,37 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
 
 const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& query)
 {
-    std::cout << "ControlLogic";
-    if(query.find("forward") != std::string::npos)
+    if(query.find("fastforward") != std::string::npos)
+    {
+        pStatusField->value = "Moving - FastForward";
+    }
+    else if(query.find("forward") != std::string::npos)
     {
         pStatusField->value = "Moving - Forward";
+    }
+    else if(query.find("stop") != std::string::npos)
+    {
+        pStatusField->value = "Stopped";
+    }
+    else if(query.find("left") != std::string::npos)
+    {
+        pStatusField->value = "Moving - Turning Left";
+    }
+    else if(query.find("right") != std::string::npos)
+    {
+        pStatusField->value = "Moving - Turning Right";
     }
     else
     {
         pStatusField->value = "Error";
     }
 
+
     return webTextList;
+}
+
+void FcgiServiceIf::recalculateCurrentSpeedCommand()
+{
+
 }
 

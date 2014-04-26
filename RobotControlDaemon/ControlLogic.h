@@ -23,17 +23,26 @@ using namespace JsWebUtils;
 class ControlLogic : public FcgiServiceIf
 {
 public:
-  ControlLogic(const char* serialPort);
+  ControlLogic(const char* serialPort, float speedChangeRate = 1.0f);
   virtual ~ControlLogic();
 
   void run();
 
+  // This function is the callback for messages from the robot control board, via UART
   void msgRxNotification(Base16Message* msg);
+
+  // This function is for the callbacks of the FastCGI server.
+  // The return value is a linked list of status values for printing.
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
 
   virtual const FcgiServiceIf::PrintableParam* serveCall(const std::string& query);
   
 private:
+
+  void setTargetSpeed(float leftTrack, float rightTrack);
+  void sendSpeedsCommand(float leftTrackSpeed, float rightTrackSpeed);
+
+  void recalculateCurrentSpeedCommand();
 
   bool mShouldRun;
 
@@ -48,6 +57,14 @@ private:
   char battVoltageBuff[PARAM_BUFFERS_LENGTH];
   char devCurrentBuff[PARAM_BUFFERS_LENGTH];
 
+  // Rate of change in speed, in percent per second (of the full scale).
+  const float cfRateOfChangeM;
+
+  // Speed calculation variables
+  float fTargetSpeedLeftM;
+  float fTargetSpeedRightM;
+  float fCurrSpeedLeftM;
+  float fCurrSpeedRightM;
 };
 
 #endif // CONTROL_LOGIC__H
