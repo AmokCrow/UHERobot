@@ -23,7 +23,7 @@ using namespace JsWebUtils;
 class ControlLogic : public FcgiServiceIf
 {
 public:
-  ControlLogic(const char* serialPort, float speedChangeRate = 1.0f);
+  ControlLogic(const char* serialPort);
   virtual ~ControlLogic();
 
   void run();
@@ -39,10 +39,11 @@ public:
   
 private:
 
-  void setTargetSpeed(float leftTrack, float rightTrack);
-  void sendSpeedsCommand(float leftTrackSpeed, float rightTrackSpeed);
+  void setTrackSpeeds(float leftTrack, float rightTrack);
 
-  void recalculateCurrentSpeedCommand();
+  void sendMotorsCommand(char leftTrackSetting, char rightTrackSetting);
+
+  void reportError(const char* errorStr);
 
   bool mShouldRun;
 
@@ -57,14 +58,10 @@ private:
   char battVoltageBuff[PARAM_BUFFERS_LENGTH];
   char devCurrentBuff[PARAM_BUFFERS_LENGTH];
 
-  // Rate of change in speed, in percent per second (of the full scale).
-  const float cfRateOfChangeM;
-
   // Speed calculation variables
   float fTargetSpeedLeftM;
   float fTargetSpeedRightM;
-  float fCurrSpeedLeftM;
-  float fCurrSpeedRightM;
+  static const int SPEED_SCALE = 127;
 };
 
 #endif // CONTROL_LOGIC__H

@@ -9,14 +9,11 @@
 
 using namespace JsWebUtils;
 
-ControlLogic::ControlLogic(const char* serialPort, float speedChangeRate)
+ControlLogic::ControlLogic(const char* serialPort)
     : serialChannel(serialPort)
     , mServer(this)
-    , cfRateOfChangeM(speedChangeRate)
     , fTargetSpeedLeftM(0.0f)
     , fTargetSpeedRightM(0.0f)
-    , fCurrSpeedLeftM(0.0f)
-    , fCurrSpeedRightM(0.0f)
 {
     webTextList = new FcgiServiceIf::PrintableParam;
     webTextList->name = "Battery: ";
@@ -62,18 +59,18 @@ void ControlLogic::run()
     char tmpBuff[5];
     Base16Message message;
 
-    tmpBuff[0] = SET_MOTORS;
-    tmpBuff[1] = 100;
-    tmpBuff[2] = 100;
+    tmpBuff[0] = eRobotCommands::CONTROLLER_HEARTBEAT;
+    tmpBuff[1] = 0;
+    tmpBuff[2] = 0;
     message.setHeader(tmpBuff);
-    message.setBody(&(tmpBuff[1]), 2);
+    message.setBody(&(tmpBuff[1]), 0);
     message.encode();
 
     mServer.start();
 
-    while(roundCounter < 40)
+    while(roundCounter < 120)
     {
-        usleep(1000000L);
+        usleep(500000L);
         serialChannel.sendMessage(message);
 
         roundCounter++;
@@ -111,44 +108,68 @@ const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& 
     if(query.find("fastforward") != std::string::npos)
     {
         pStatusField->value = "Moving - FastForward";
+        setTrackSpeeds(1.0f, 1.0f);
     }
     else if(query.find("forward") != std::string::npos)
     {
         pStatusField->value = "Moving - Forward";
+        setTrackSpeeds(0.5f, 0.5f);
     }
     else if(query.find("stop") != std::string::npos)
     {
         pStatusField->value = "Stopped";
+        setTrackSpeeds(0.0f, 0.0f);
     }
     else if(query.find("left") != std::string::npos)
     {
         pStatusField->value = "Moving - Turning Left";
+        setTrackSpeeds(-0.3f, 0.3f);
     }
     else if(query.find("right") != std::string::npos)
     {
         pStatusField->value = "Moving - Turning Right";
+        setTrackSpeeds(0.3f, -0.3f);
     }
     else
     {
         pStatusField->value = "Error";
+        setTrackSpeeds(0.0f, 0.0f);
     }
 
 
     return webTextList;
 }
 
-void ControlLogic::setTargetSpeed(float leftTrack, float rightTrack)
+void ControlLogic::setTrackSpeeds(float leftTrack, float rightTrack)
+{
+    if((leftTrack >= 1.0f) || (leftTrack <= -1.0f) || (rightTrack >= 1.0f) || (rightTrack <= -1.0f))
+    {
+        reportError("ControlLogic::setTrackSpeeds : Error: Speed out of range");
+        return;
+    }
+
+    char left = SPEED_SCALE * leftTrack;
+    char right = SPEED_SCALE * rightTrack;
+
+    sendMotorsCommand(left, right);
+}
+
+void ControlLogic::sendMotorsCommand(char leftTrackSetting, char rightTrackSetting)
+{
+    char tmpBuff[2];
+    tmpBuff[0] = leftTrackSetting;
+    tmpBuff[1] = rightTrackSetting;
+
+    char command = eRobotCommands::SET_MOTORS;
+
+    Base16Message message;
+    message.setHeader(&command);
+    message.setBody(tmpBuff, 2);
+    message.encode();
+    serialChannel.sendMessage(message);
+}
+
+void ControlLogic::reportError(const char* errorStr)
 {
 
 }
-
-void ControlLogic::recalculateCurrentSpeedCommand()
-{
-
-}
-
-void ControlLogic::sendSpeedsCommand(float leftTrackSpeed, float rightTrackSpeed)
-{
-
-}
-

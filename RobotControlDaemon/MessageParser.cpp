@@ -7,7 +7,8 @@ MessageParser::MessageParser(const char* serialPort)
      mThreadStatus(END),
      mRxThreadPtr(NULL),
      mPortName(serialPort),
-     mSubscriberList()
+     mSubscriberList(),
+     txMutexM()
 {
    init();
 }
@@ -150,6 +151,7 @@ bool MessageParser::subscribe(MsgCallbackType cbaFunc, void* usrData)
     tmp.addr = cbaFunc;
     tmp.userDataPtr = usrData;
     mSubscriberList.push_back(tmp);
+    return true;
 }
 
 void MessageParser::notifySubscribers()
@@ -162,6 +164,10 @@ void MessageParser::notifySubscribers()
 
 bool MessageParser::sendMessage(Base16Message& msg)
 {
+    // Mutex here, to make message sending thread-safe.
+    // One serial port could not be used for multiple simultaneous messages in any case.
+    txMutexM.lock();
+
     const char* buffPtr = msg.encodedBytesPtr();
     int numBytes = msg.encodedLength();
 
@@ -180,6 +186,8 @@ bool MessageParser::sendMessage(Base16Message& msg)
 
         }
     }
+
+    txMutexM.unlock();
 
     return true;
 }

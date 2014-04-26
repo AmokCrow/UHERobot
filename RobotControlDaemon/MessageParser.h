@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #include "../CommandList.h"
 #include "base16message.h"
@@ -76,6 +77,9 @@ private:
    // Message propagation
    std::vector<MsgSubscriber> mSubscriberList;
    Base16Message mMessage;
+
+   // Thread safety bits
+   std::mutex txMutexM;
 };
 
 
