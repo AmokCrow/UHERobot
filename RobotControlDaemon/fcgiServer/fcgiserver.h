@@ -2,7 +2,7 @@
 #define FCGISERVER_H
 
 
-#include <thread>
+#include <pthread.h>
 #include <vector>
 
 #include <fcgiapp.h>
@@ -23,11 +23,12 @@ public:
 
 private:
 
+    static void* statRun(void* instance) { ((FcgiServer*)instance)->run(); return NULL; }
     void run();
 
     FcgiServiceIf* pClientM;
 
-    std::thread threadM;
+    pthread_t threadM;
     FCGX_Request requestM;
 };
 

@@ -53,7 +53,9 @@ void ControlLogic::run()
 {
     std::cout << "Starting" << std::endl;
     serialChannel.subscribe(&ControlLogic::notificationCallback, (void*)this);
-    serialChannel.startThread();
+    // serialChannel.startThread();
+
+    std::cout << "Serial thread started" << std::endl;
 
     int roundCounter = 0;
     char tmpBuff[5];
@@ -66,13 +68,19 @@ void ControlLogic::run()
     message.setBody(&(tmpBuff[1]), 0);
     message.encode();
 
+    std::cout << "Message encoded" << std::endl;
+
     mServer.start();
+
+    std::cout << "Server started" << std::endl;
 
     while(roundCounter < 120)
     {
         usleep(500000L);
+        std::cout << "Slept" << std::endl;
         serialChannel.sendMessage(message);
 
+        std::cout << "Sent hartbeat" << std::endl;
         roundCounter++;
     }
 

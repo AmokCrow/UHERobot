@@ -56,6 +56,8 @@ private:
    void rxError(const char* msg);
    bool resolveTxIssue();
 
+   void verbose(const char* msg);
+
    enum eThreadInstruction
    {
        RUN,

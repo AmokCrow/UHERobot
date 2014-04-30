@@ -147,6 +147,8 @@ void MessageParser::readIncomingData()
 
 bool MessageParser::subscribe(MsgCallbackType cbaFunc, void* usrData)
 {
+    verbose("Someone subscribed");
+
     MsgSubscriber tmp;
     tmp.addr = cbaFunc;
     tmp.userDataPtr = usrData;
@@ -156,6 +158,8 @@ bool MessageParser::subscribe(MsgCallbackType cbaFunc, void* usrData)
 
 void MessageParser::notifySubscribers()
 {
+    verbose("Notifying subscribers");
+
     for(unsigned int i = 0; i < mSubscriberList.size(); i++)
     {
         mSubscriberList.at(i).addr(mSubscriberList.at(i).userDataPtr, &mMessage);
@@ -164,6 +168,8 @@ void MessageParser::notifySubscribers()
 
 bool MessageParser::sendMessage(Base16Message& msg)
 {
+    verbose("Sending message");
+
     // Mutex here, to make message sending thread-safe.
     // One serial port could not be used for multiple simultaneous messages in any case.
     txMutexM.lock();
@@ -208,3 +214,9 @@ void MessageParser::rxError(const char* msg)
 {
     std::cout << "MessageParser: Error: " << msg << std::endl;
 }
+
+void MessageParser::verbose(const char* msg)
+{
+    std::cout << "MessageParser: " << msg << std::endl;
+}
+

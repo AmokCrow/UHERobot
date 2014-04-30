@@ -5,7 +5,7 @@ CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11
 
-LIBS += -lfcgi
+LIBS += -lfcgi -lpthread
 
 SOURCES += main.cpp \
     MessageParser.cpp \

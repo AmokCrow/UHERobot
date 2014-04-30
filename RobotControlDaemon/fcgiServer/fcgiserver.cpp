@@ -30,14 +30,29 @@ FcgiServer::~FcgiServer()
 
 void FcgiServer::start()
 {
-    threadM = std::thread(&FcgiServer::run, this);
     FCGX_InitRequest(&requestM, 0, 0);
+
+    // TODO: Change back to C++11 threads after RasPi or other targets get
+    // library update to fix threads crash bug. Already fixed in Ubuntu,
+    // but not in Raspbian...
+    // threadM = std::thread(&FcgiServer::run, this);
+
+    int status = pthread_create(&threadM, NULL, statRun, this);
+
+    if(status != 0)
+    {
+        std::cout << "Error: pthread_create failed" << std::endl;
+    }
 }
 
 void FcgiServer::stop()
 {
     FCGX_ShutdownPending();
-    threadM.join();
+
+    // TODO: Change to C++11 thread along with thread creation
+    // threadM.join();
+
+    pthread_join(threadM, NULL);
 }
 
 void FcgiServer::run()
