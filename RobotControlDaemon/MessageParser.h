@@ -17,8 +17,9 @@
 
 #include <string>
 #include <vector>
-#include <thread>
-#include <mutex>
+// #include <thread>
+// #include <mutex>
+#include <pthread.h>
 
 #include "../CommandList.h"
 #include "base16message.h"
@@ -49,6 +50,7 @@ private:
    void init();
    void deinit();
 
+   static void* statMsgProcessingThread(void* obj) { ((MessageParser*)obj)->msgProcessingThread(); return NULL; }
    void msgProcessingThread();
    void readIncomingData();
    void notifySubscribers();
@@ -69,7 +71,8 @@ private:
    // Thread control
    volatile eThreadInstruction mThreadInstruction;
    volatile eThreadInstruction mThreadStatus;
-   std::thread* mRxThreadPtr;
+   //std::thread* mRxThreadPtr;
+    pthread_t rxThreadM;
 
    // Serial port needs
    termios mOldTtyDefinitions;
@@ -81,7 +84,8 @@ private:
    Base16Message mMessage;
 
    // Thread safety bits
-   std::mutex txMutexM;
+   // std::mutex txMutexM;
+   pthread_mutex_t txMutexM;
 };
 
 

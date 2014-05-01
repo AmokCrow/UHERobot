@@ -5,12 +5,14 @@
 MessageParser::MessageParser(const char* serialPort)
    : mThreadInstruction(END),
      mThreadStatus(END),
-     mRxThreadPtr(NULL),
+     //mRxThreadPtr(NULL),
+     rxThreadM(),
      mPortName(serialPort),
      mSubscriberList(),
      txMutexM()
 {
    init();
+   pthread_mutex_init(&txMutexM, NULL);
 }
 
 void MessageParser::init()
@@ -84,15 +86,22 @@ void MessageParser::reset()
 
 void MessageParser::startThread()
 {
+    /*
     if(mRxThreadPtr == NULL)
     {
         mThreadInstruction = RUN;
         mRxThreadPtr = new std::thread(&MessageParser::msgProcessingThread, this);
     }
+    */
+    if(pthread_create(&rxThreadM, NULL, statMsgProcessingThread, this) != 0)
+    {
+        verbose("Error: Could not start thread");
+    }
 }
 
 void MessageParser::stopThread()
 {
+    /*
     if(mRxThreadPtr != NULL)
     {
         mThreadInstruction = END;
@@ -100,6 +109,10 @@ void MessageParser::stopThread()
         delete mRxThreadPtr;
         mRxThreadPtr = NULL;
     }
+    */
+
+    mThreadInstruction = END;
+    pthread_join(rxThreadM, NULL);
 }
 
 void MessageParser::msgProcessingThread()
@@ -172,7 +185,8 @@ bool MessageParser::sendMessage(Base16Message& msg)
 
     // Mutex here, to make message sending thread-safe.
     // One serial port could not be used for multiple simultaneous messages in any case.
-    txMutexM.lock();
+    //txMutexM.lock();
+    pthread_mutex_lock(&txMutexM);
 
     const char* buffPtr = msg.encodedBytesPtr();
     int numBytes = msg.encodedLength();
@@ -193,7 +207,8 @@ bool MessageParser::sendMessage(Base16Message& msg)
         }
     }
 
-    txMutexM.unlock();
+    //txMutexM.unlock();
+    pthread_mutex_unlock(&txMutexM);
 
     return true;
 }
