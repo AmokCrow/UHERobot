@@ -23,6 +23,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    std::cout << "Using port " << portname << std::endl;
+
 
     ControlLogic logic(portname.c_str());
 

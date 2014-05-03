@@ -224,6 +224,7 @@ bool Base16Message::encode()
     }
 
     mEncodedBuff[mNumBytesEncoded] = 'e';
+    mEncodedBuff[mNumBytesEncoded + 1] = 0;
 
     mNumBytesEncoded++;
 
@@ -232,6 +233,12 @@ bool Base16Message::encode()
 
 bool Base16Message::decode()
 {
+    for(int i = 0; i < mNumBytesEncoded; i++)
+    {
+        std::cout << mEncodedBuff[i] << '(' << (int)mEncodedBuff[i] << ") ";
+    }
+    std::cout << std::endl;
+
     // The number of characters in the buffer should be 2n + 4, where n is the number of payload bytes.
     if((mNumBytesEncoded % 2) != 0)
     {

@@ -93,6 +93,7 @@ void MessageParser::startThread()
         mRxThreadPtr = new std::thread(&MessageParser::msgProcessingThread, this);
     }
     */
+    mThreadInstruction = RUN;
     if(pthread_create(&rxThreadM, NULL, statMsgProcessingThread, this) != 0)
     {
         verbose("Error: Could not start thread");
@@ -189,6 +190,7 @@ bool MessageParser::sendMessage(Base16Message& msg)
     pthread_mutex_lock(&txMutexM);
 
     const char* buffPtr = msg.encodedBytesPtr();
+    verbose(buffPtr);
     int numBytes = msg.encodedLength();
 
     while(numBytes > 0)

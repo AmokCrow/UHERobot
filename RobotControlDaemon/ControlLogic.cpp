@@ -53,7 +53,7 @@ void ControlLogic::run()
 {
     std::cout << "Starting" << std::endl;
     serialChannel.subscribe(&ControlLogic::notificationCallback, (void*)this);
-    // serialChannel.startThread();
+    serialChannel.startThread();
 
     std::cout << "Serial thread started" << std::endl;
 
@@ -77,10 +77,10 @@ void ControlLogic::run()
     while(roundCounter < 120)
     {
         usleep(500000L);
-        std::cout << "Slept" << std::endl;
+        // std::cout << "Slept" << std::endl;
         serialChannel.sendMessage(message);
 
-        std::cout << "Sent hartbeat" << std::endl;
+        // std::cout << "Sent hartbeat" << std::endl;
         roundCounter++;
     }
 
@@ -108,6 +108,17 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
                   << ", content "
                   << (int)(msg->decodedBytesPtr()[0])
                   << " " << (int)(msg->decodedBytesPtr()[1]) << std::endl;
+    }
+    else
+    {
+        std::cout << "Got a message, length "
+                  << msg->decodedLength()
+                  << ", content ";
+        for(int i = 0; i < msg->decodedLength(); i++)
+        {
+            std::cout << (int)(msg->decodedBytesPtr()[i]) << " ";
+        }
+        std::cout << std::endl;
     }
 }
 
@@ -173,11 +184,14 @@ void ControlLogic::sendMotorsCommand(char leftTrackSetting, char rightTrackSetti
     Base16Message message;
     message.setHeader(&command);
     message.setBody(tmpBuff, 2);
-    message.encode();
+    if(message.encode() == false)
+    {
+        reportError("Message did not encode");
+    }
     serialChannel.sendMessage(message);
 }
 
 void ControlLogic::reportError(const char* errorStr)
 {
-
+    std::cout << "ControlLogic : Error:" << errorStr << std::endl;
 }

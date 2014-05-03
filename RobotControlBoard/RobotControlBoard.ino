@@ -38,6 +38,9 @@ void setup()  {
   receiver.init();
   
   Serial.println("Started");
+  
+  lastCommandTime = millis();
+  
 }
 
 void loop()  {
@@ -46,6 +49,10 @@ void loop()  {
   // It's not much of a safety, but it's a start.
   if((millis() - lastCommandTime) > 5000)
   {
+    panServo.write(180);
+    tiltServo.write(180);
+    Serial.write("b00e");
+    motors.MotorControlBySignedBytes(0, 0);
     motors.MotorDirectionSet(0b0000);
     lastCommandTime = millis();
   }
@@ -56,7 +63,7 @@ void loop()  {
 void serialEvent() 
 {
   char tmp;
-  uint8_t const* data;
+  const uint8_t* data;
   
   while (Serial.available()) 
   {
@@ -65,9 +72,13 @@ void serialEvent()
     // add it to the inputString:
     tmp = receiver.addReceivedChar(inChar);
     
+    panServo.write(0);
+    tiltServo.write(0);
+    
     if(tmp == CommandReceiver::MESSAGE_ERROR)
     {
       motors.MotorDirectionSet(0b0000);
+      Serial.print("b020202e");
     }
     else if(tmp == CommandReceiver::MESSAGE_READY)
     {
@@ -76,12 +87,24 @@ void serialEvent()
       
       if((data[0] == SET_SERVOS) && (receiver.buffLength() == 3))
       {
+        Serial.print("b0001e");
         panServo.write(map(data[1], 0, 255, 0, 180));
         tiltServo.write(map(data[2], 0, 255, 0, 180));
       }
       else if((data[0] == SET_MOTORS) && (receiver.buffLength() == 3))
       {
+        Serial.print("b0000e");
         motors.MotorControlBySignedBytes((char)data[1], (char)data[2]);
+      }
+      else if(data[0] == CONTROLLER_HEARTBEAT)
+      {
+        
+      }
+      else
+      {
+        uint8_t* tmpc = (uint8_t*)&(textBuffer[0]);
+        CommandReceiver::writeResponse(tmpc, 40, data, receiver.buffLength());
+        Serial.print(textBuffer);
       }
     }
     
