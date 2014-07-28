@@ -1,7 +1,7 @@
 
-UHERobot specification for communication between the web interface and the daemon, comprising further of the communication between the server and the client, and the server-side script and the daemon.
+UHERobot specification for communication between the web interface and the daemon, of the communication between the server and the client.
 
-1. Server-Client
+1. Overview
 
 1.1 Messaging method
 The server and the client will exchenge information by AJAX calls made by the client. The call will be made to a server-side resource named cgi-bin/uheint.py . 
@@ -21,16 +21,4 @@ statuslog : <a text string> (to be appended to the on-screen scrolling status fi
 battery : <a text string> (the current state of the robot battery)
 movementstatus : <text string> (signifies the current effected movement of the robot)
  
-
-2. Server script and daemon
-
-2.1 Messaging method
-The server and daemon communicate via nnamed pipes. The daemon will listens constantly for communications from a pape named cgi2daemon, that is located in the main folder of the daemon process. The daemon will also output status to a pipe named daemon2cgi, located in the same folder. The messages are text-based, using ASCII encoding. One full communication shall be begun by opening a pipe for reading or writing by the cgi script, and ends by the closing of the pipe by the writer.
-
-2.2 Message contents
-The messages shall consist of fields bordered by angle brackets, with the header and content separated by a colon, like so: "<...:...>"
-
-The valid headers and values are the same as those used for the server-client communication.
-
-
 

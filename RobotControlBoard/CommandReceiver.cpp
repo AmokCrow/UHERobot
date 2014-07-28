@@ -22,7 +22,7 @@ uint8_t CommandReceiver::buffLength()
   return 0;
 }
 
-uint8_t const * CommandReceiver::getBuffer()
+const uint8_t * CommandReceiver::getBuffer()
 {
   return mBuffer;
 }
@@ -43,7 +43,7 @@ char CommandReceiver::addReceivedChar(char rec)
   if(rec == END_OF_MESSAGE)
   {
     // An odd count of characters or an empty message are always erroneus
-    if(odd || (index == 1))
+    if(odd || (index < 1))
     {
       mCounter = 0;
       mState = HAD_ERROR;
@@ -77,6 +77,7 @@ char CommandReceiver::addReceivedChar(char rec)
   }
   
   // To get here, the character received must have been 0-9, A-F 
+  mCounter++;
 
   // There is an odd number of bytes received. This makes it even.
   if(odd)
@@ -90,4 +91,55 @@ char CommandReceiver::addReceivedChar(char rec)
   
   return NO_ACTION;
 }
+
+void CommandReceiver::writeResponse(uint8_t* dest, uint8_t destLen, const uint8_t* src, uint8_t srcLen)
+{
+  if(destLen < ((2 * srcLen) + 3))
+  {
+    srcLen = (destLen - 3) / 2;
+  }
+  else
+  {
+    destLen = (2 * srcLen) + 3;
+  }
+  
+  dest[0] = CLEAR_BUFFER;
+  
+  int i = 0;
+  while(i < srcLen)
+  {
+    char tmp = (src[i] & 0xF0) >> 4;
+    
+    
+    if(tmp > 9)
+    {
+      tmp += 'A' - 10;
+    }
+    else
+    {
+      tmp += '0';
+    }
+    
+    dest[(2 * i) + 1] = tmp;
+    
+    tmp = (src[i] & 0x0F);
+    
+    if(tmp > 9)
+    {
+      tmp += 'A' - 10;
+    }
+    else
+    {
+      tmp += '0';
+    }
+    
+    dest[(2 * i) + 2] = tmp;
+    
+    i++;
+  }
+  
+  dest[(2 * i) + 1] = END_OF_MESSAGE;
+  dest[(2 * i) + 2] = 0;
+}
+
 

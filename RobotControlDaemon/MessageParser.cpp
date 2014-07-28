@@ -5,11 +5,14 @@
 MessageParser::MessageParser(const char* serialPort)
    : mThreadInstruction(END),
      mThreadStatus(END),
-     mRxThreadPtr(NULL),
+     //mRxThreadPtr(NULL),
+     rxThreadM(),
      mPortName(serialPort),
-     mSubscriberList()
+     mSubscriberList(),
+     txMutexM()
 {
    init();
+   pthread_mutex_init(&txMutexM, NULL);
 }
 
 void MessageParser::init()
@@ -17,6 +20,7 @@ void MessageParser::init()
    // Opening a file handle the C way. The whole serial interface is in C, I guess.
    // I cound not find documentation for the O_NOCTTY, but I think it has to do with disabling echo and other console features.
    int portnum = open(mPortName.c_str(), O_RDWR | O_NOCTTY);
+   mPortNumber = portnum;
    
    termios tty;
    memset (&tty, 0, sizeof tty); // TODO: Check if this is really needed, with tcgetattr on the next line.
@@ -82,15 +86,23 @@ void MessageParser::reset()
 
 void MessageParser::startThread()
 {
+    /*
     if(mRxThreadPtr == NULL)
     {
         mThreadInstruction = RUN;
         mRxThreadPtr = new std::thread(&MessageParser::msgProcessingThread, this);
     }
+    */
+    mThreadInstruction = RUN;
+    if(pthread_create(&rxThreadM, NULL, statMsgProcessingThread, this) != 0)
+    {
+        verbose("Error: Could not start thread");
+    }
 }
 
 void MessageParser::stopThread()
 {
+    /*
     if(mRxThreadPtr != NULL)
     {
         mThreadInstruction = END;
@@ -98,6 +110,10 @@ void MessageParser::stopThread()
         delete mRxThreadPtr;
         mRxThreadPtr = NULL;
     }
+    */
+
+    mThreadInstruction = END;
+    pthread_join(rxThreadM, NULL);
 }
 
 void MessageParser::msgProcessingThread()
@@ -132,8 +148,9 @@ void MessageParser::readIncomingData()
     int buffPos = 0;
     int numLeft = numRead;
 
-    while(numRead > 0)
+    while(numLeft > 0)
     {
+        // Numleft is updated by the method to reflect the remaining undigested data
         if(mMessage.feedRawMsgBuff(&(buffer[buffPos]), numLeft) == Base16Message::FINISHED)
         {
             notifySubscribers();
@@ -142,17 +159,38 @@ void MessageParser::readIncomingData()
     }
 }
 
+bool MessageParser::subscribe(MsgCallbackType cbaFunc, void* usrData)
+{
+    verbose("Someone subscribed");
+
+    MsgSubscriber tmp;
+    tmp.addr = cbaFunc;
+    tmp.userDataPtr = usrData;
+    mSubscriberList.push_back(tmp);
+    return true;
+}
+
 void MessageParser::notifySubscribers()
 {
+    verbose("Notifying subscribers");
+
     for(unsigned int i = 0; i < mSubscriberList.size(); i++)
     {
-        mSubscriberList.at(i).addr(&mMessage, mSubscriberList.at(i).userDataPtr);
+        mSubscriberList.at(i).addr(mSubscriberList.at(i).userDataPtr, &mMessage);
     }
 }
 
 bool MessageParser::sendMessage(Base16Message& msg)
 {
+    verbose("Sending message");
+
+    // Mutex here, to make message sending thread-safe.
+    // One serial port could not be used for multiple simultaneous messages in any case.
+    //txMutexM.lock();
+    pthread_mutex_lock(&txMutexM);
+
     const char* buffPtr = msg.encodedBytesPtr();
+    verbose(buffPtr);
     int numBytes = msg.encodedLength();
 
     while(numBytes > 0)
@@ -170,6 +208,9 @@ bool MessageParser::sendMessage(Base16Message& msg)
 
         }
     }
+
+    //txMutexM.unlock();
+    pthread_mutex_unlock(&txMutexM);
 
     return true;
 }
@@ -190,3 +231,9 @@ void MessageParser::rxError(const char* msg)
 {
     std::cout << "MessageParser: Error: " << msg << std::endl;
 }
+
+void MessageParser::verbose(const char* msg)
+{
+    std::cout << "MessageParser: " << msg << std::endl;
+}
+

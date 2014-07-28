@@ -3,6 +3,7 @@
 #define MOTOR_CONTROL_LIB__H
 
 #include <Arduino.h>
+#include <Wire.h>
 #include "CommandList.h"
 
 class SeeedMC
@@ -28,3 +29,4 @@ private:
 };
 
 #endif // MOTOR_CONTROL_LIB__H
+

@@ -17,7 +17,7 @@ Base16Message::Base16Message()
 
 char Base16Message::getHeaderByte(int byteNum)
 {
-    mHeader[byteNum];
+    return mHeader[byteNum];
 }
 
 const char* Base16Message::encodedBytesPtr()
@@ -98,6 +98,7 @@ bool Base16Message::setBody(const char * const msg, int msgLen)
     memcpy(mUnencodedBuff, msg, msgLen);
 
     mHasData = true;
+    mNumBytesUnencoded = msgLen;
 
     if(mHasHeader)
     {
@@ -116,7 +117,7 @@ Base16Message::eMsgStates Base16Message::feedRawMsgByte(char rawByte)
     }
 
     // End of message. Try to decode it.
-    if(rawByte == 's')
+    if(rawByte == 'e')
     {
         putByteToRawBuff(rawByte);
 
@@ -222,13 +223,22 @@ bool Base16Message::encode()
         mNumBytesEncoded += 2;
     }
 
-    mEncodedBuff[mNumBytesEncoded] = 's';
+    mEncodedBuff[mNumBytesEncoded] = 'e';
+    mEncodedBuff[mNumBytesEncoded + 1] = 0;
 
     mNumBytesEncoded++;
+
+    return true;
 }
 
 bool Base16Message::decode()
 {
+    for(int i = 0; i < mNumBytesEncoded; i++)
+    {
+        std::cout << mEncodedBuff[i] << '(' << (int)mEncodedBuff[i] << ") ";
+    }
+    std::cout << std::endl;
+
     // The number of characters in the buffer should be 2n + 4, where n is the number of payload bytes.
     if((mNumBytesEncoded % 2) != 0)
     {
@@ -269,7 +279,7 @@ bool Base16Message::decode()
     mIsEncoded = true;
     mIsDecoded = true;
 
-    mNumBytesUnencoded = dataPos;
+    mNumBytesUnencoded = dataPos - 1;
 
     return true;
 }
@@ -325,7 +335,7 @@ char Base16Message::B16ToByte(const char * const src)
     {
         char tmp = src[i];
 
-        if((tmp > '0') && (tmp < '9'))
+        if((tmp >= '0') && (tmp <= '9'))
         {
             tmp -= '0';
         }

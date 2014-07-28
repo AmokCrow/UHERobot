@@ -2,10 +2,15 @@
 
 src_files = [
    'main.cpp',
-   'ControlLogic.cpp'
+   'ControlLogic.cpp',
+   'fcgiServer/fcgiserver.cpp',
+   'base16message.cpp',
+   'MessageParser.cpp'
 ]
 
+env = Environment()
 
+env.Append(CPPFLAGS='-std=c++11')
 
-Program(target = 'RobotControlDaemon', source = src_files)
+env.Program(target = 'RobotControlDaemon', source = src_files, LIBS=['fcgi++', 'fcgi', 'pthread'])
 

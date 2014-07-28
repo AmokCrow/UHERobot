@@ -5,16 +5,19 @@ CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11
 
+LIBS += -lfcgi -lpthread
+
 SOURCES += main.cpp \
     MessageParser.cpp \
     ControlLogic.cpp \
     base16message.cpp \
-    pipemessager.cpp
+    fcgiServer/fcgiserver.cpp
 
 HEADERS += \
     MessageParser.h \
     ControlLogic.h \
     ../CommandList.h \
     base16message.h \
-    pipemessager.h
+    fcgiServer/fcgiserver.h \
+    fcgiServer/fcgiserviceif.h
 

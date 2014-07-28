@@ -22,7 +22,9 @@ public:
   char addReceivedChar(char rec);
   
   uint8_t buffLength();
-  uint8_t const* getBuffer();
+  const uint8_t* getBuffer();
+  
+  static void writeResponse(uint8_t* dest, uint8_t destLen, const uint8_t* src, uint8_t srcLen);
   
 private:
   
@@ -41,3 +43,4 @@ private:
 };
 
 #endif // COMMAND_RECEIVER__H
+

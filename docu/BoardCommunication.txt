@@ -91,6 +91,8 @@ Causes the robot to stop any movement, but make no other action.
 HEARTBEAT = 0
 ANALOG_READING = 1
 
+Data bytes: 2
+
 4.2.1 Heartbeat
 
 Header value: 0
