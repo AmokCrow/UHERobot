@@ -8,13 +8,14 @@
 class DebugLog
 {
 public:
-    DebugLog(int maxItems);
+    DebugLog(unsigned int maxItems);
 
-    add(std::string item);
-    get(std::string item);
+    void add(std::string item);
+    std::string get();
+    bool isEmpty();
 
 private:
-    static int maxItems;
+    const unsigned int mMaxItems;
     std::queue<std::string> mMsgQueue;
     pthread_mutex_t mMutex;
 };

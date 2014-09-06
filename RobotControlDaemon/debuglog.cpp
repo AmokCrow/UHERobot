@@ -1,19 +1,49 @@
 #include "debuglog.h"
 
-DebugLog::DebugLog()
-    : maxItems(0)
+DebugLog::DebugLog(unsigned int maxItems)
+    : mMaxItems(maxItems)
     , mMsgQueue()
     , mMutex()
 {
-    pthread_mutex_init(&txMutexM, NULL);
+    pthread_mutex_init(&mMutex, NULL);
 }
 
-DebugLog::add(std::string item)
+void DebugLog::add(std::string item)
 {
+    pthread_mutex_lock(&mMutex);
 
+    if(mMsgQueue.size() < mMaxItems)
+    {
+        mMsgQueue.push(item);
+    }
+
+    pthread_mutex_unlock(&mMutex);
 }
 
-DebugLog::get(std::string item)
+std::string DebugLog::get()
 {
+    std::string retString;
 
+    pthread_mutex_lock(&mMutex);
+
+    if(mMsgQueue.empty() == false)
+    {
+        retString = mMsgQueue.front();
+        mMsgQueue.pop();
+    }
+
+    pthread_mutex_unlock(&mMutex);
+
+    return retString;
+}
+
+bool DebugLog::isEmpty()
+{
+    pthread_mutex_lock(&mMutex);
+
+    bool bEmpty = mMsgQueue.empty();
+
+    pthread_mutex_unlock(&mMutex);
+
+    return bEmpty;
 }
