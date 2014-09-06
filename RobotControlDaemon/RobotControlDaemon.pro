@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     MessageParser.cpp \
     ControlLogic.cpp \
     base16message.cpp \
-    fcgiServer/fcgiserver.cpp
+    fcgiServer/fcgiserver.cpp \
+    debuglog.cpp
 
 HEADERS += \
     MessageParser.h \
@@ -19,5 +20,6 @@ HEADERS += \
     ../CommandList.h \
     base16message.h \
     fcgiServer/fcgiserver.h \
-    fcgiServer/fcgiserviceif.h
+    fcgiServer/fcgiserviceif.h \
+    debuglog.h
 

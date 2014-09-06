@@ -53,7 +53,7 @@ http {
     
     location / {
       index index.html;
-      root /home/pi/webContent;
+      root /home/pi/RCD/StaticWebContent;
     }
   }
 }
