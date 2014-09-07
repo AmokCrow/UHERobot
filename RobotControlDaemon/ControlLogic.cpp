@@ -14,6 +14,7 @@ ControlLogic::ControlLogic(const char* serialPort)
     , mServer(this)
     , fTargetSpeedLeftM(0.0f)
     , fTargetSpeedRightM(0.0f)
+    , mLog(50)
 {
     webTextList = new FcgiServiceIf::PrintableParam;
     webTextList->name = "Battery: ";

@@ -17,6 +17,7 @@
 #include "MessageParser.h"
 #include "fcgiServer/fcgiserviceif.h"
 #include "fcgiServer/fcgiserver.h"
+#include "debuglog.h"
 
 using namespace JsWebUtils;
 
@@ -62,6 +63,8 @@ private:
   float fTargetSpeedLeftM;
   float fTargetSpeedRightM;
   static const int SPEED_SCALE = 127;
+
+  DebugLog mLog;
 };
 
 #endif // CONTROL_LOGIC__H
