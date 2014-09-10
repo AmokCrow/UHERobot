@@ -70,6 +70,22 @@ void FcgiServer::run()
         if(std::string::npos != uri.find("api"))
         {
             // Serve with JSON
+            FCGX_FPrintF(requestM.out, "Content-type: application/json\r\n\r\n");
+
+            FCGX_FPrintF(requestM.out, "{");
+            for(; par != NULL; par = par->next)
+            {
+                std::cout << par->name << std::endl;
+                if(par->next == NULL)
+                {
+                    FCGX_FPrintF(requestM.out, " \"%s : %s\" ", par->name, par->value);
+                }
+                else
+                {
+                    FCGX_FPrintF(requestM.out, " \"%s : %s\", ", par->name, par->value);
+                }
+            }
+            FCGX_FPrintF(requestM.out, "}\r\n");
         }
         else // Serve as a normal HTML query
         {

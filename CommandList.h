@@ -36,13 +36,13 @@ enum eRobotCommandLength
 enum eRobotResponseTag
 {
     ROBOT_HEARTBEAT_TAG = 0,
-    ANALOG_READING_TAG = 3 // uint8 pin, uint16 result.
+    ANALOG_READING_TAG = 1
 };
 
 enum eRobotResponseLength
 {
     ROBOT_HEARTBEAT_LENGHT = 0,
-    ANALOG_READING_LENGTH = 1
+    ANALOG_READING_LENGTH = 3 // uint8 pin, uint16 result.
 };
 
 #endif // COMMAND_LIST__H

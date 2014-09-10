@@ -9,16 +9,11 @@ Base16Message::Base16Message()
     , mNumBytesEncoded(0)
     , mIsEncoded(false)
     , mIsDecoded(false)
-    , mHasHeader(false)
     , mHasData(false)
 {
 
 }
 
-char Base16Message::getHeaderByte(int byteNum)
-{
-    return mHeader[byteNum];
-}
 
 const char* Base16Message::encodedBytesPtr()
 {
@@ -74,20 +69,6 @@ bool Base16Message::isValid()
     return false;
 }
 
-bool Base16Message::setHeader(const char * const header)
-{
-    memcpy(mHeader, header, UHEROBOT_BOARD_MSG_HEADER_MAX_LEN);
-
-    mHasHeader = true;
-
-    if(mHasData)
-    {
-        mIsDecoded = true;
-    }
-
-    return isValid();
-}
-
 bool Base16Message::setBody(const char * const msg, int msgLen)
 {
     if(msgLen > UHEROBOT_BOARD_MSG_MAX_LEN_BYTES)
@@ -100,10 +81,7 @@ bool Base16Message::setBody(const char * const msg, int msgLen)
     mHasData = true;
     mNumBytesUnencoded = msgLen;
 
-    if(mHasHeader)
-    {
-        mIsDecoded = true;
-    }
+    mIsDecoded = true;
 
     return isValid();
 }
@@ -211,12 +189,6 @@ bool Base16Message::encode()
     mNumBytesEncoded = 1;
     mEncodedBuff[0] = 'b';
 
-    for(int i = 0; i < MAX_MSG_HEADER_LEN; i++)
-    {
-        byteToB16(mHeader[i], &(mEncodedBuff[mNumBytesEncoded]));
-        mNumBytesEncoded += 2;
-    }
-
     for(int i = 0; i < mNumBytesUnencoded; i++)
     {
         byteToB16(mUnencodedBuff[i], &(mEncodedBuff[mNumBytesEncoded]));
@@ -253,13 +225,6 @@ bool Base16Message::decode()
         clear();
         return false;
     }
-
-    for(int  i = 0; i < MAX_MSG_HEADER_LEN; i++)
-    {
-        mHeader[i] = B16ToByte(&(mEncodedBuff[1 + i * 2]));
-    }
-
-    mHasHeader = true;
 
     // start from beginning of message body and hop per Base16 pair
     int rawPos = 1 + (MAX_MSG_HEADER_LEN * 2);
@@ -357,7 +322,6 @@ void Base16Message::clear()
     mNumBytesEncoded = 0;
     mIsEncoded = false;
     mIsDecoded = false;
-    mHasHeader = false;
     mHasData = false;
 }
 

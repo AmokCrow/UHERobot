@@ -40,10 +40,6 @@ public:
   
 private:
 
-  void setTrackSpeeds(float leftTrack, float rightTrack);
-
-  void sendMotorsCommand(char leftTrackSetting, char rightTrackSetting);
-
   void reportError(const char* errorStr);
 
   bool mShouldRun;
