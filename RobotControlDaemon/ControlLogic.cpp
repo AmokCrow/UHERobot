@@ -16,23 +16,7 @@ ControlLogic::ControlLogic(const char* serialPort)
     , fTargetSpeedRightM(0.0f)
     , mLog(50)
 {
-    webTextList = new FcgiServiceIf::PrintableParam;
-    webTextList->name = "Battery: ";
-    webTextList->value = battVoltageBuff;
-    sprintf(battVoltageBuff, "empty");
 
-    webTextList->next = new FcgiServiceIf::PrintableParam;
-    FcgiServiceIf::PrintableParam* pTmp = webTextList->next;
-    pTmp->name = "Current: ";
-    pTmp->value = devCurrentBuff;
-    sprintf(devCurrentBuff, "none");
-
-    pTmp->next = new FcgiServiceIf::PrintableParam;
-    pTmp = pTmp->next;
-    pTmp->name = "Status: ";
-    pTmp->value = "erroneous";
-
-    pStatusField = pTmp;
 
     /*
      *battVoltageBuff[PARAM_BUFFERS_LENGTH];
@@ -42,12 +26,7 @@ ControlLogic::ControlLogic(const char* serialPort)
 
 ControlLogic::~ControlLogic()
 {
-    while(webTextList != NULL)
-    {
-        FcgiServiceIf::PrintableParam* pTmp = webTextList->next;
-        delete webTextList;
-        webTextList = pTmp;
-    }
+
 }
 
 void ControlLogic::run()
@@ -119,12 +98,14 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
             // Voltage measurement
             if(pBytes[i + 1] == 0)
             {
-                snprintf(battVoltageBuff, PARAM_BUFFERS_LENGTH, "%ui", (((unsigned int)pBytes[i + 2] << 8) | ((unsigned int)pBytes[i + 3])));
+                mVoltage = (((uint16_t)pBytes[i + 2] << 8) | ((uint16_t)pBytes[i + 3]));
+                //snprintf(battVoltageBuff, PARAM_BUFFERS_LENGTH, "%ui", (((unsigned int)pBytes[i + 2] << 8) | ((unsigned int)pBytes[i + 3])));
             }
             // Current measurement
             else if(pBytes[i + 1] == 1)
             {
-                snprintf(devCurrentBuff, PARAM_BUFFERS_LENGTH, "%ui", (((unsigned int)pBytes[i + 2] << 8) | ((unsigned int)pBytes[i + 3])));
+                mCurrent = (((uint16_t)pBytes[i + 2] << 8) | ((uint16_t)pBytes[i + 3]));
+                //snprintf(devCurrentBuff, PARAM_BUFFERS_LENGTH, "%ui", (((unsigned int)pBytes[i + 2] << 8) | ((unsigned int)pBytes[i + 3])));
             }
 
             i += ANALOG_READING_LENGTH;
@@ -132,41 +113,97 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
     }
 }
 
-const FcgiServiceIf::PrintableParam* ControlLogic::serveCall(const std::string& query)
+void ControlLogic::serveCall(const std::string& query, const PrintableParamStat *&responseStatics, std::list<PrintableParamDyn> &responseDynamics)
 {
-    if(query.find("fastforward") != std::string::npos)
+    int fieldValue;
+    std::string fieldName;
+    std::string valueAsString;
+
+    int motorR = 0;
+    int motorL = 0;
+
+    size_t position = 0;
+    size_t endOfSection;
+
+    responseStatics = 0;
+
+    while(position < query.length())
     {
-        pStatusField->value = "Moving - FastForward";
-        //setTrackSpeeds(1.0f, 1.0f);
-    }
-    else if(query.find("forward") != std::string::npos)
-    {
-        pStatusField->value = "Moving - Forward";
-        //setTrackSpeeds(0.5f, 0.5f);
-    }
-    else if(query.find("stop") != std::string::npos)
-    {
-        pStatusField->value = "Stopped";
-        //setTrackSpeeds(0.0f, 0.0f);
-    }
-    else if(query.find("left") != std::string::npos)
-    {
-        pStatusField->value = "Moving - Turning Left";
-        //setTrackSpeeds(-0.3f, 0.3f);
-    }
-    else if(query.find("right") != std::string::npos)
-    {
-        pStatusField->value = "Moving - Turning Right";
-        //setTrackSpeeds(0.3f, -0.3f);
-    }
-    else
-    {
-        pStatusField->value = "Error";
-        //setTrackSpeeds(0.0f, 0.0f);
+        endOfSection = query.find('=', position);
+
+        // End of query string?
+        if(endOfSection == std::string::npos)
+        {
+            // End of query string.
+            break;
+        }
+
+        // Extract the argument
+        fieldName = query.substr(position, endOfSection - position);
+
+        // Skip over the '='
+        position = endOfSection + 1;
+
+        // Find the end of the number.
+        endOfSection = query.find('&', position);
+
+        // End of query string?
+        if(endOfSection == std::string::npos)
+        {
+            // End of query string. The number ends to the end of the query string.
+            endOfSection = query.length();
+        }
+
+        valueAsString = query.substr(position, endOfSection - position);
+
+        position = endOfSection + 1;
+
+        try
+        {
+            fieldValue = std::stoi(valueAsString);
+        }
+        catch(...)
+        {
+            // The value was either out of range or mangled. Either way, skip and continue.
+            fieldValue = 0;
+            continue;
+        }
+
+        if(fieldName == "motorR")
+        {
+            motorR = fieldValue;
+        }
+        else if(fieldName == "motorL")
+        {
+            motorL == fieldValue;
+        }
     }
 
+    /*
+    messageTxBuff[0] = SET_MOTORS_TAG;
+    messageTxBuff[1] = (motorL >> 8) & 0xFF;
+    messageTxBuff[2] = motorL & 0xFF;
+    messageTxBuff[3] = (motorR >> 8) & 0xFF;
+    messageTxBuff[4] = motorR & 0xFF;
 
-    return webTextList;
+    message.setBody(messageTxBuff, 5);
+    message.encode();
+    */
+
+    char tmpBuff[50];
+    PrintableParamDyn parTmp;
+
+    // Voltage
+    parTmp.name = "voltage";
+    snprintf(tmpBuff, 50, "%ui", mVoltage);
+    parTmp.value = tmpBuff;
+    responseDynamics.push_back(parTmp);
+
+    // Current
+    parTmp.name = "current";
+    snprintf(tmpBuff, 50, "%ui", mCurrent);
+    parTmp.value = tmpBuff;
+    responseDynamics.push_back(parTmp);
 }
 
 void ControlLogic::reportError(const char* errorStr)

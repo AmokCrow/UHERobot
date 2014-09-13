@@ -2,6 +2,7 @@
 #define FCGISERVICEIF_H
 
 #include <string>
+#include <list>
 
 namespace JsWebUtils
 {
@@ -12,15 +13,21 @@ public:
 
 
 
-    struct PrintableParam
+    struct PrintableParamDyn
+    {
+        std::string name;
+        std::string value;
+    };
+
+    struct PrintableParamStat
     {
         const char* name;
         const char* value;
-        PrintableParam* next;
+        PrintableParamStat* next;
     };
 
     virtual ~FcgiServiceIf() { }
-    virtual const PrintableParam* serveCall(const std::string& query) = 0;
+    virtual void serveCall(const std::string& query, const PrintableParamStat* &responseStatics, std::list<PrintableParamDyn>& responseDynamics) = 0;
 
 };
 

@@ -14,10 +14,14 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <list>
+
 #include "MessageParser.h"
 #include "fcgiServer/fcgiserviceif.h"
 #include "fcgiServer/fcgiserver.h"
 #include "debuglog.h"
+
+#include <cstdint>
 
 using namespace JsWebUtils;
 
@@ -36,7 +40,7 @@ public:
   // The return value is a linked list of status values for printing.
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
 
-  virtual const FcgiServiceIf::PrintableParam* serveCall(const std::string& query);
+  virtual void serveCall(const std::string& query, const PrintableParamStat* &responseStatics, std::list<PrintableParamDyn>& responseDynamics);
   
 private:
 
@@ -48,12 +52,11 @@ private:
   MessageParser serialChannel;
 
   FcgiServer mServer;
-  FcgiServiceIf::PrintableParam* webTextList;
-  FcgiServiceIf::PrintableParam* pStatusField;
 
-  static const int PARAM_BUFFERS_LENGTH = 20;
-  char battVoltageBuff[PARAM_BUFFERS_LENGTH];
-  char devCurrentBuff[PARAM_BUFFERS_LENGTH];
+  uint16_t mVoltage;
+  uint16_t mCurrent;
+
+  char messageTxBuff[50];
 
   // Speed calculation variables
   float fTargetSpeedLeftM;

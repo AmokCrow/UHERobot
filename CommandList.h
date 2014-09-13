@@ -25,7 +25,7 @@ enum eRobotCommandTag
 // Length represents the length of the data part.
 enum eRobotCommandLength
 {
-    SET_MOTORS_LENGTH = 4, // Left motor, right motor. Both are sint16.
+    SET_MOTORS_LENGTH = 4, // Right motor, left motor. Both are sint16.
     SET_SERVOS_LENGTH = 3, // 1st byte is servo number. Followed by two bytes representing uint16 position.
     CONTROLLER_HEARTBEAT_LENGTH = 0,
     ERROR_LENGTH = 2, // uint16 error bitmask. 0 for no errors. Error bits defined separately.
