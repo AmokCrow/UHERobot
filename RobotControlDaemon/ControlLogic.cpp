@@ -12,8 +12,10 @@ using namespace JsWebUtils;
 ControlLogic::ControlLogic(const char* serialPort)
     : serialChannel(serialPort)
     , mServer(this)
-    , fTargetSpeedLeftM(0.0f)
-    , fTargetSpeedRightM(0.0f)
+    , mVoltage(0)
+    , mfVoltage(0.0f)
+    , mCurrent(0)
+    , mfCurrent(0.0f)
     , mLog(50)
 {
 
@@ -60,7 +62,9 @@ void ControlLogic::run()
     {
         usleep(500000L);
         // std::cout << "Slept" << std::endl;
-        serialChannel.sendMessage(message);
+
+        // Note!: Took out sending here to better test the main sending function.
+        //serialChannel.sendMessage(message);
 
         // std::cout << "Sent hartbeat" << std::endl;
         roundCounter++;
@@ -110,6 +114,10 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
 
             i += ANALOG_READING_LENGTH;
         }
+        else
+        {
+            return;
+        }
     }
 }
 
@@ -119,11 +127,16 @@ void ControlLogic::serveCall(const std::string& query, const PrintableParamStat 
     std::string fieldName;
     std::string valueAsString;
 
-    int motorR = 0;
-    int motorL = 0;
+    int16_t motorR = 0;
+    int16_t motorL = 0;
 
     size_t position = 0;
     size_t endOfSection;
+
+    Base16Message message;
+    bool hadLeftMotor = false;
+    bool hadRightMotor = false;
+    bool msgHasContent = false;
 
     responseStatics = 0;
 
@@ -172,23 +185,39 @@ void ControlLogic::serveCall(const std::string& query, const PrintableParamStat 
         if(fieldName == "motorR")
         {
             motorR = fieldValue;
+            hadRightMotor = true;
         }
         else if(fieldName == "motorL")
         {
-            motorL == fieldValue;
+            motorL = fieldValue;
+            hadLeftMotor = true;
         }
     }
 
-    /*
-    messageTxBuff[0] = SET_MOTORS_TAG;
-    messageTxBuff[1] = (motorL >> 8) & 0xFF;
-    messageTxBuff[2] = motorL & 0xFF;
-    messageTxBuff[3] = (motorR >> 8) & 0xFF;
-    messageTxBuff[4] = motorR & 0xFF;
+    char messageTxBuff[50];
+    int msgLength = 0;
 
-    message.setBody(messageTxBuff, 5);
+    if(hadRightMotor && hadLeftMotor)
+    {
+        messageTxBuff[msgLength + 0] = SET_MOTORS_TAG;
+        messageTxBuff[msgLength + 1] = (motorL >> 8) & 0xFF;
+        messageTxBuff[msgLength + 2] = motorL & 0xFF;
+        messageTxBuff[msgLength + 3] = (motorR >> 8) & 0xFF;
+        messageTxBuff[msgLength + 4] = motorR & 0xFF;
+        msgLength += 5;
+        msgHasContent = true;
+    }
+
+    if(!msgHasContent)
+    {
+        messageTxBuff[msgLength] = CONTROLLER_HEARTBEAT_TAG;
+        msgLength++;
+    }
+
+    message.setBody(messageTxBuff, msgLength);
     message.encode();
-    */
+
+    serialChannel.sendMessage(message);
 
     char tmpBuff[50];
     PrintableParamDyn parTmp;

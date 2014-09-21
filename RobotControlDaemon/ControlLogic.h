@@ -54,14 +54,9 @@ private:
   FcgiServer mServer;
 
   uint16_t mVoltage;
+  float mfVoltage;
   uint16_t mCurrent;
-
-  char messageTxBuff[50];
-
-  // Speed calculation variables
-  float fTargetSpeedLeftM;
-  float fTargetSpeedRightM;
-  static const int SPEED_SCALE = 127;
+  float mfCurrent;
 
   DebugLog mLog;
 };
