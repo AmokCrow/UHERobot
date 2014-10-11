@@ -59,17 +59,46 @@ void FcgiServer::run()
 {
     std::string query;
     std::string uri;
+    std::list<FcgiServiceIf::PrintableParamDyn> dynamics;
+    const FcgiServiceIf::PrintableParamStat* par;
 
     while(FCGX_Accept_r(&requestM) >= 0)
     {
         uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
         std::cout << "Got request. URI: " << uri << "QUERY: " << query << std::endl;
-        const FcgiServiceIf::PrintableParam* par = pClientM->serveCall(query);
+        pClientM->serveCall(query, par, dynamics);
         std::cout << "Served" << std::endl;
         if(std::string::npos != uri.find("api"))
         {
             // Serve with JSON
+            FCGX_FPrintF(requestM.out, "Content-type: application/json\r\n\r\n");
+
+            FCGX_FPrintF(requestM.out, "{");
+            for(; par != NULL; par = par->next)
+            {
+                std::cout << par->name << std::endl;
+                if(par->next == NULL)
+                {
+                    FCGX_FPrintF(requestM.out, " \"%s : %s\" ", par->name, par->value);
+                }
+                else
+                {
+                    FCGX_FPrintF(requestM.out, " \"%s : %s\", ", par->name, par->value);
+                }
+            }
+
+            while(!dynamics.empty())
+            {
+                FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
+                dynamics.pop_front();
+
+                if(!dynamics.empty())
+                {
+                    FCGX_FPrintF(requestM.out, ", ");
+                }
+            }
+            FCGX_FPrintF(requestM.out, "}\r\n");
         }
         else // Serve as a normal HTML query
         {
@@ -80,6 +109,17 @@ void FcgiServer::run()
             {
                 std::cout << par->name << std::endl;
                 FCGX_FPrintF(requestM.out, "%s : %s <br>\r\n", par->name, par->value);
+            }
+
+            while(!dynamics.empty())
+            {
+                FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
+                dynamics.pop_front();
+
+                if(!dynamics.empty())
+                {
+                    FCGX_FPrintF(requestM.out, ", <br>");
+                }
             }
             FCGX_FPrintF(requestM.out, "</p>\r\n");
         }

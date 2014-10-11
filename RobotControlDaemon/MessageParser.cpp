@@ -203,6 +203,7 @@ bool MessageParser::sendMessage(Base16Message& msg)
         {
             if(resolveTxIssue() == false)
             {
+                pthread_mutex_unlock(&txMutexM);
                 return false;
             }
 

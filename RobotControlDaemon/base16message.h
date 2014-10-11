@@ -20,7 +20,6 @@ class Base16Message
 
     Base16Message();
 
-    char getHeaderByte(int byteNum);
     const char* encodedBytesPtr();
     int encodedLength();
     int decodedLength();
@@ -28,7 +27,6 @@ class Base16Message
 
     bool isValid();
 
-    bool setHeader(const char * const header);
     bool setBody(const char * const msg, int msgLen);
 
     enum eMsgStates {
@@ -60,7 +58,6 @@ class Base16Message
     // The start and end bytes take 2 bytes
     static const int MAX_BUFF_SIZE = (MAX_MSG_HEADER_LEN + MAX_MSG_LEN) * 2 + 2;
 
-    char mHeader[MAX_MSG_HEADER_LEN];
     char mUnencodedBuff[MAX_MSG_LEN];
     int mNumBytesUnencoded;
 
@@ -73,8 +70,7 @@ class Base16Message
     bool mIsEncoded;
     bool mIsDecoded;
 
-    // These represent whether there is header and/or data in the unencoded side.
-    bool mHasHeader;
+    // These represent whether there is data in the unencoded side.
     bool mHasData;
 };
 

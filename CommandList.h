@@ -12,21 +12,37 @@ enum eControlChar
 #define UHEROBOT_BOARD_MSG_MAX_LEN_BYTES 20
 #define UHEROBOT_BOARD_MSG_HEADER_MAX_LEN 1
 
-enum eRobotCommands
+enum eRobotCommandTag
 {
-    SET_MOTORS = 0,
-    SET_SERVOS = 1,
-    CONTROLLER_HEARTBEAT = 2,
-    ERROR = 3,
-    GET_ANALOG_READING = 4,
-    SET_DIGITAL_PIN = 5,
-    HALT = 6
+    SET_MOTORS_TAG = 0,
+    SET_SERVOS_TAG = 1,
+    CONTROLLER_HEARTBEAT_TAG = 2,
+    ERROR_TAG = 3,
+    SET_DIGITAL_PIN_TAG = 4,
+    HALT_TAG = 5
 };
 
-enum eRobotResponses
+// Length represents the length of the data part.
+enum eRobotCommandLength
 {
-    ROBOT_HEARTBEAT = 0,
-    ANALOG_READING = 1
+    SET_MOTORS_LENGTH = 4, // Right motor, left motor. Both are sint16.
+    SET_SERVOS_LENGTH = 3, // 1st byte is servo number. Followed by two bytes representing uint16 position.
+    CONTROLLER_HEARTBEAT_LENGTH = 0,
+    ERROR_LENGTH = 2, // uint16 error bitmask. 0 for no errors. Error bits defined separately.
+    SET_DIGITAL_PIN_LENGTH = 2, // uint8 pin number. uint8 state (1 = high, 0 = low)
+    HALT_LENGTH = 0
+};
+
+enum eRobotResponseTag
+{
+    ROBOT_HEARTBEAT_TAG = 0,
+    ANALOG_READING_TAG = 1
+};
+
+enum eRobotResponseLength
+{
+    ROBOT_HEARTBEAT_LENGHT = 0,
+    ANALOG_READING_LENGTH = 3 // uint8 pin, uint16 result.
 };
 
 #endif // COMMAND_LIST__H

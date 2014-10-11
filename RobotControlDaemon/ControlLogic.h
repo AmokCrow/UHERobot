@@ -14,9 +14,14 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <list>
+
 #include "MessageParser.h"
 #include "fcgiServer/fcgiserviceif.h"
 #include "fcgiServer/fcgiserver.h"
+#include "debuglog.h"
+
+#include <cstdint>
 
 using namespace JsWebUtils;
 
@@ -35,13 +40,9 @@ public:
   // The return value is a linked list of status values for printing.
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
 
-  virtual const FcgiServiceIf::PrintableParam* serveCall(const std::string& query);
+  virtual void serveCall(const std::string& query, const PrintableParamStat* &responseStatics, std::list<PrintableParamDyn>& responseDynamics);
   
 private:
-
-  void setTrackSpeeds(float leftTrack, float rightTrack);
-
-  void sendMotorsCommand(char leftTrackSetting, char rightTrackSetting);
 
   void reportError(const char* errorStr);
 
@@ -51,17 +52,13 @@ private:
   MessageParser serialChannel;
 
   FcgiServer mServer;
-  FcgiServiceIf::PrintableParam* webTextList;
-  FcgiServiceIf::PrintableParam* pStatusField;
 
-  static const int PARAM_BUFFERS_LENGTH = 20;
-  char battVoltageBuff[PARAM_BUFFERS_LENGTH];
-  char devCurrentBuff[PARAM_BUFFERS_LENGTH];
+  uint16_t mVoltage;
+  float mfVoltage;
+  uint16_t mCurrent;
+  float mfCurrent;
 
-  // Speed calculation variables
-  float fTargetSpeedLeftM;
-  float fTargetSpeedRightM;
-  static const int SPEED_SCALE = 127;
+  DebugLog mLog;
 };
 
 #endif // CONTROL_LOGIC__H
