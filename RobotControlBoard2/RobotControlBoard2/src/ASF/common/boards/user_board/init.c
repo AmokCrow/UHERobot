@@ -19,8 +19,11 @@ void board_init(void)
 	 */
 	
 	
-	gpio_configure_pin(LED0_GPIO, (GPIO_DIR_OUTPUT | GPIO_DRIVE_HIGH));
+	gpio_configure_pin(RED_LED_GPIO, (GPIO_DIR_OUTPUT | GPIO_INIT_HIGH));
+    gpio_configure_pin(BOARD_POWER_GPIO, (GPIO_DIR_OUTPUT | GPIO_INIT_LOW));
 	
+    
+    /*
 	gpio_map_t USART1_GPIO_MAP = 
 	{
 		{AVR32_USART1_TXD_0_2_PIN, AVR32_USART1_TXD_0_2_FUNCTION},
@@ -28,6 +31,16 @@ void board_init(void)
 	};
 	
 	gpio_enable_module(USART1_GPIO_MAP, sizeof(USART1_GPIO_MAP) / sizeof(USART1_GPIO_MAP[0]));
+    */
+    
+    // Enable debug USART
+    gpio_map_t USART2_GPIO_MAP =
+    {
+        {AVR32_USART2_TXD_0_1_PIN, AVR32_USART2_TXD_0_1_FUNCTION},
+        {AVR32_USART2_RXD_0_1_PIN, AVR32_USART2_RXD_0_1_FUNCTION}
+    };
+    
+    gpio_enable_module(USART2_GPIO_MAP, sizeof(USART2_GPIO_MAP) / sizeof(USART2_GPIO_MAP[0]));
     
     static usart_serial_options_t usart_options = {
         .baudrate = USART_DBG_BAUDRATE,
@@ -39,6 +52,7 @@ void board_init(void)
     
     usart_serial_init(USART_DBG_PORT, &usart_options);
     
+    
     gpio_map_t ADC_GPIO_MAP =
     {
         {AVR32_ADCIFB_AD_0_PIN, AVR32_ADCIFB_AD_0_FUNCTION},
@@ -47,6 +61,7 @@ void board_init(void)
     };
         
     gpio_enable_module(ADC_GPIO_MAP, sizeof(ADC_GPIO_MAP) / sizeof(ADC_GPIO_MAP[0]));
+    
     
     adcifb_opt_t adc_opt = 
     {
@@ -68,7 +83,11 @@ void board_init(void)
         	.sleep_mode_enable = false
     };
     
+    
     adcifb_configure((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS, &adc_opt);
     adcifb_configure_trigger((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS, AVR32_ADCIFB_TRGMOD_NT, 0);
     adcifb_channels_enable((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS, (1 << 0) | (1 << 1) | (1 << 2));
+    
+    // Enable fast GPIO
+    gpio_local_init();
 }
