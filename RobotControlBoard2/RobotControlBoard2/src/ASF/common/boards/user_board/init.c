@@ -90,4 +90,8 @@ void board_init(void)
     
     // Enable fast GPIO
     gpio_local_init();
+    
+    // Init timer 0 for motor control.
+    
+    
 }

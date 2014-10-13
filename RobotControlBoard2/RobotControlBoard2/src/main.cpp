@@ -31,6 +31,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "Servo4017.h"
+#include "usart_serial.h"
+#include "adcifb.h"
+
 volatile uint16_t inputVoltage = 0;
 volatile uint16_t boardCurrent = 0;
 volatile uint16_t boardTemperature = 0;
@@ -39,7 +43,7 @@ volatile uint16_t boardTemperature = 0;
 __attribute__((__interrupt__)) static void adc_data_interrupt(void)
 {
     
-    uint32_t result = adcifb_get_last_data((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS);
+    uint32_t result = adcifb_get_last_data(&AVR32_ADCIFB);
     uint8_t channel = (result >> 16) & 0xFF;
     uint16_t adcValue = result & 0x0FFF; // The lowest 12 bits
     
@@ -109,7 +113,7 @@ int main (void)
         adcifb_start_conversion_sequence((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS);
         
         
-        usart_serial_write_packet(USART_DBG_PORT, test_str, strlen(test_str));
+        usart_serial_write_packet((volatile avr32_usart_t *)USART_DBG_PORT, (const uint8_t*)test_str, strlen(test_str));
 		
         delay_s(1);
         /*
@@ -120,8 +124,8 @@ int main (void)
         sprintf(printBuffer, "Vin: 0x%X - %u - %.2fV\r\n", inputVoltage, inputVoltage, ftmp);
         usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
         */
-        sprintf(printBuffer, "Iin: 0x%X - %u\r\n", boardCurrent, boardCurrent);
-        usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
+        sprintf((char*)printBuffer, "Iin: 0x%X - %u\r\n", boardCurrent, boardCurrent);
+        usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen((const char*)printBuffer));
         /*
         // Vin = Vadc / 2 -> Vout = Vadc * 2
         fvoltage = voltFromAdc(boardTemperature) * 2.0f;

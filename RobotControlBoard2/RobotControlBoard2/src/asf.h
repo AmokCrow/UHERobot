@@ -77,6 +77,9 @@
 // From module: Generic board support
 #include <board.h>
 
+// From module: INTC - Interrupt Controller
+#include <intc.h>
+
 // From module: IOPORT - General purpose I/O service
 #include <ioport.h>
 
@@ -98,6 +101,19 @@
 
 // From module: System Clock Control - UC3 L0 implementation
 #include <sysclk.h>
+
+// From module: TC - Timer/Counter
+#include <tc.h>
+
+// From module: TWI - Two-Wire Interface - UC3 A3/A4/C/D/L implementation
+#include <twi_master.h>
+#include <uc3_twim/twi_master.h>
+
+// From module: TWI - Two-Wire Master Interface
+#include <twim.h>
+
+// From module: TWI - Two-Wire Slave Interface
+#include <twis.h>
 
 // From module: USART - Serial interface - UC3 implementation
 #include <serial.h>

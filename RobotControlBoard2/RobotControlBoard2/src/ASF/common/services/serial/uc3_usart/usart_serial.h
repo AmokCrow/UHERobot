@@ -47,6 +47,10 @@
 #ifndef _USART_SERIAL_H_
 #define _USART_SERIAL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "compiler.h"
 #include "sysclk.h"
 #include "status_codes.h"
@@ -140,5 +144,9 @@ status_code_t usart_serial_write_packet(usart_if usart, const uint8_t *data,
  */
 status_code_t usart_serial_read_packet(usart_if usart, uint8_t *data,
 		size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _USART_SERIAL_H_
