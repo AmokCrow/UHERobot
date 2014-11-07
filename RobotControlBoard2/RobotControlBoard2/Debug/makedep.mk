@@ -10,6 +10,12 @@ src\ASF\avr32\drivers\twim\twim.c
 
 src\ASF\avr32\drivers\twis\twis.c
 
+src\Base16MsgParser.cpp
+
+src\MotorDriver.cpp
+
+src\PrintFunctions.cpp
+
 src\Servo4017.cpp
 
 src\AdcHandler.cpp

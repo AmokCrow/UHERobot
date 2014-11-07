@@ -1,0 +1,44 @@
+Title:
+Spec for comms between Robot Control Board and Robot Control Daemon, v2.0
+
+Author:
+Johannes Sulkakoski
+
+Date:
+2014-11-05
+
+Content
+============================================
+
+1. Bus:
+All message between the two CPUs shall happen on a asynchronous bus, e.g. UART. No restriction are placed on the bus type, but all throughput must be handled on byte-by-byte basis.
+
+
+2. Encoding:
+All message content shall be encoded in Base16 so that that all bytes of the message shall be divided to 4-bit parts, or nibbles, represented in Base16 by one ascii characters each. The nibbles' values map to ascii characters so that values 0-9 are represented by ascii characters '0'-'9'. Values 10-15 shall be represented by ascii characters 'A'-'F'.
+All Ascii representations of nibble values shall be uppercase.
+All messages shall be prepended with ascii character 'b' and appended with Ascii character 'e'. These characters are to be considered as part of a message, and no message shall be decoded unless the whole message, including the pre- and appended characters, is received.
+
+Transferred frame:
+'b' | Base16 Msg | 'e'
+
+
+3. Data representation and ordering:
+The first 2 bytes of a message shall represent the message's length and the message's type, respectively. This specification does not define the meaning of the type byte, and it's implemention is not mandatory. It is, however, recommended as a minimal message bus expansion mechanism.
+The length byte is mandatory and is meant for allowing easy verification of the message's integrity by the decoding software unit. The number indicates the length of the whole message, including the length and message type fields, in bytes. Thus the length field may only get values 2-255. 
+The maximum length of a message of this specification can be 255 bytes. However, implementations can choose to only support smaller messages. This may be necessary due to e.g. hardware constraints.
+
+All multi-byte variables must be transmitted Most-Significant-Byte-First.
+
+Message content:
+Length(1 Byte) | Msg type (1 Byte) | Data (1 - 253 bytes)
+
+
+4. Message contents
+Message content is specific to the devices conversing. The following are defined for the UHERobot v2 only.
+
+4.1 Daemon to Board:
+Length: 2 + 21 = 23
+Type: 0
+Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, signed) | ... | Servo 8 (2 Bytes, signed)
+

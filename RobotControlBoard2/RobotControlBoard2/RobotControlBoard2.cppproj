@@ -351,7 +351,7 @@
             <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcc.compiler.directories.IncludePaths>
-        <avr32gcc.compiler.optimization.level>Optimize (-O1)</avr32gcc.compiler.optimization.level>
+        <avr32gcc.compiler.optimization.level>Optimize for size (-Os)</avr32gcc.compiler.optimization.level>
         <avr32gcc.compiler.optimization.OtherFlags>-fdata-sections</avr32gcc.compiler.optimization.OtherFlags>
         <avr32gcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</avr32gcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
         <avr32gcc.compiler.optimization.UseAssemblerForPseudoInstructions>True</avr32gcc.compiler.optimization.UseAssemblerForPseudoInstructions>
@@ -394,8 +394,9 @@
             <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.compiler.directories.IncludePaths>
-        <avr32gcccpp.compiler.optimization.level>Optimize (-O1)</avr32gcccpp.compiler.optimization.level>
+        <avr32gcccpp.compiler.optimization.level>Optimize for size (-Os)</avr32gcccpp.compiler.optimization.level>
         <avr32gcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</avr32gcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <avr32gcccpp.compiler.optimization.PrepareDataForGarbageCollection>True</avr32gcccpp.compiler.optimization.PrepareDataForGarbageCollection>
         <avr32gcccpp.compiler.optimization.UseAssemblerForPseudoInstructions>True</avr32gcccpp.compiler.optimization.UseAssemblerForPseudoInstructions>
         <avr32gcccpp.compiler.optimization.DebugLevel>Maximum (-g3)</avr32gcccpp.compiler.optimization.DebugLevel>
         <avr32gcccpp.compiler.warnings.AllWarnings>True</avr32gcccpp.compiler.warnings.AllWarnings>
@@ -507,6 +508,24 @@
     <None Include="src\ASF\common\services\twi\twi_master.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\Base16MsgParser.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Base16MsgParser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\MotorDriver.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\MotorDriver.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PrintFunctions.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PrintFunctions.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\Servo4017.cpp">
       <SubType>compile</SubType>
     </Compile>

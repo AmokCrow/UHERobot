@@ -48,6 +48,10 @@
 #ifndef _TC_H_
 #define _TC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \defgroup group_avr32_drivers_tc TC - Timer/Counter
  *
@@ -612,5 +616,8 @@ extern int tc_write_rc(volatile avr32_tc_t *tc, unsigned int channel, unsigned s
 /**
  * \}
  */
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // _TC_H_
