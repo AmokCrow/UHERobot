@@ -109,13 +109,13 @@ void MotorDriver::setSpeed(int16_t speed)
             if(mDirInv)
             {
                 gpio_enable_gpio_pin(mGpioPin2);
-                gpio_local_clr_gpio_pin(mGpioPin2);
+                gpio_configure_pin(mGpioPin2, (GPIO_DIR_OUTPUT | GPIO_INIT_LOW));
                 gpio_enable_module_pin(mGpioPin1, mPin1TmrFunc);
             }
             else
             {
                 gpio_enable_gpio_pin(mGpioPin1);
-                gpio_local_clr_gpio_pin(mGpioPin1);
+                gpio_configure_pin(mGpioPin1, (GPIO_DIR_OUTPUT | GPIO_INIT_LOW));
                 gpio_enable_module_pin(mGpioPin2, mPin2TmrFunc);
             }
         }

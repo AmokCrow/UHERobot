@@ -22,37 +22,24 @@ void Base16MsgParser::init(uint8_t* buffer, uint8_t bufferLength)
 
 uint8_t Base16MsgParser::decodeChar(uint8_t ch)
 {
-    // Msg start
-    if(ch == 'b')
-    {
-        reset();
-        mValidStart = 1;
-        return 0;
-    }
-    
     // Not validly started message
     if(mValidStart == 0)
     {
-        reset();
-        return 0;
-    }
-    
-    // Msg end
-    if(ch == 'e')
-    {
-        if((mLastHalfbyteWasOddParity == 0) && (mNumBytesInBuffer != 0))
+        // Msg start
+        if(ch == 'b')
         {
-            uint8_t tmp = mNumBytesInBuffer;
             reset();
-            return tmp;
+            mValidStart = 1;
+            return 0;
         }
         else
         {
+            reset();
             return 0;
         }
     }
     
-    // Buffer overflow rotection
+    // Buffer overflow protection
     if(mNumBytesInBuffer >= mBuffLength)
     {
         reset();
@@ -69,9 +56,29 @@ uint8_t Base16MsgParser::decodeChar(uint8_t ch)
     {
         halfbyte = (ch + 10) - 'A';
     }
+    // Not a valid half-byte. Check for other known characters.
     else
     {
-        // Not a valid half-byte
+        // Msg start
+        if(ch == 'b')
+        {
+            reset();
+            mValidStart = 1;
+            return 0;
+        }
+        
+        // Msg end
+        if(ch == 'e')
+        {
+            if((mLastHalfbyteWasOddParity == 0) && (mNumBytesInBuffer != 0) && (mNumBytesInBuffer == mNumBytesTotalExpected))
+            {
+                uint8_t tmp = mNumBytesInBuffer;
+                reset();
+                return tmp;
+            }
+        }
+        
+        // Not a valid situation. Reset communication.
         reset();
         return 0;
     }
@@ -82,6 +89,19 @@ uint8_t Base16MsgParser::decodeChar(uint8_t ch)
         mpBuffer[mNumBytesInBuffer] = (mLastHalfbyteValueReceived << 4) | halfbyte;
         mNumBytesInBuffer++;
         mLastHalfbyteWasOddParity = 0;
+        
+        if(mNumBytesInBuffer == 1)
+        {
+            mNumBytesTotalExpected = mpBuffer[0];
+        }
+        else
+        {
+            if(mNumBytesTotalExpected < mNumBytesInBuffer)
+            {
+                reset();
+                return 0;
+            }
+        }
     }
     else
     {
@@ -108,6 +128,11 @@ uint8_t Base16MsgParser::decodeBuffer(uint8_t* buf, uint8_t bufLen, uint8_t* num
     }
     
     return 0;
+}
+
+uint8_t Base16MsgParser::numBytesStillExpected()
+{
+    return mNumBytesTotalExpected - mNumBytesInBuffer;
 }
 
 void Base16MsgParser::encodeChar(uint8_t ch)
@@ -167,4 +192,5 @@ void Base16MsgParser::reset()
     mNumBytesInBuffer = 0;
     mLastHalfbyteWasOddParity = 0;
     mValidStart = 0;
+    mNumBytesTotalExpected = 0;
 }

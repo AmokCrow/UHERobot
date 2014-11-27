@@ -30,19 +30,35 @@
 #include <serial.h>
 #include <math.h>
 #include <string.h>
+#include <usart.h>
 
 #include "Servo4017.h"
 #include "usart_serial.h"
 #include "adcifb.h"
 #include "Base16MsgParser.h"
+#include "MotorDriver.h"
 
 volatile uint16_t inputVoltage = 0;
 volatile uint16_t boardCurrent = 0;
 volatile uint16_t boardTemperature = 0;
 
+volatile uint8_t gotMessage = 0;
+
+uint8_t ctrlMsgRxBuffer[100];
+
 Servo4017 servos;
 Base16MsgParser msgParser;
+MotorDriver motor1;
+MotorDriver motor2;
 
+enum CtrlMsg
+{
+    LedsOffset = 0,
+    ServosOffset = 1,
+    ServosNum = 8,
+    MotorsOffset = 1 + (8 * 2),
+    MotorsNum = 2
+};
 
 __attribute__((__interrupt__)) static void adc_data_interrupt(void)
 {
@@ -69,12 +85,71 @@ __attribute__((__interrupt__)) static void adc_data_interrupt(void)
     
 }
 
+void decipherCtrlMsg(uint8_t length)
+{
+    uint8_t msgType = ctrlMsgRxBuffer[1];
+    uint8_t msgLength = ctrlMsgRxBuffer[0];
+    
+    if((msgType == 0) && (msgLength == 23))
+    {
+        uint8_t tmp = ctrlMsgRxBuffer[2];
+        
+        // The first data byte is the led states
+        if(tmp & (1 << 0))
+        {
+            gpio_local_set_gpio_pin(RED_LED_GPIO);
+        }
+        else
+        {
+            gpio_local_clr_gpio_pin(RED_LED_GPIO);
+        }
+    }
+    else if(msgType == 1) // Debug led test message, with only the led byte
+    {
+        uint8_t tmp = ctrlMsgRxBuffer[2];
+        if(tmp & (1 << 0))
+        {
+            gpio_local_set_gpio_pin(RED_LED_GPIO);
+        }
+        else
+        {
+            gpio_local_clr_gpio_pin(RED_LED_GPIO);
+        }
+    }
+    else if(msgType == 2)
+    {
+        servos.setPos(ctrlMsgRxBuffer[2], ((uint16_t)ctrlMsgRxBuffer[3] << 8) | ctrlMsgRxBuffer[4]);
+    }
+    else if(msgType == 3)
+    {
+        motor1.setSpeed((ctrlMsgRxBuffer[2] << 8) | ctrlMsgRxBuffer[3]);
+        motor2.setSpeed((ctrlMsgRxBuffer[4] << 8) | ctrlMsgRxBuffer[5]);
+    }
+    
+    // If it was not a good message, the next incoming byte will take care of it in any case
+}
+
 __attribute__((__interrupt__)) static void ctrl_uart_interrupt(void)
 {
     uint8_t tmpChar;
-    while(usart_test_hit(USART_UPLINK_PORT))
+    
+    if(usart_test_hit(USART_DBG_PORT))
+    //while(usart_test_hit(USART_UPLINK_PORT))
     {
-        tmpChar = 0xFF & usart_getchar(USART_UPLINK_PORT);
+        gotMessage = 1;
+        tmpChar = 0xFF & usart_getchar(USART_DBG_PORT);
+        usart_putchar(USART_DBG_PORT, tmpChar);
+        //tmpChar = 0xFF & usart_getchar(USART_UPLINK_PORT);
+        tmpChar = msgParser.decodeChar(tmpChar);
+        
+        if(tmpChar != 0)
+        {
+            decipherCtrlMsg(tmpChar);
+        }
+    }
+    else
+    {
+        gotMessage = 1;
     }
 }
 
@@ -123,13 +198,30 @@ int main (void)
     servos.init(SERVO_RST_GPIO, SERVO_CLK_GPIO, &AVR32_TC1, 0, 1);
     
     const uint8_t readyStr[] = "Ready...\r\n";
+    const uint8_t actStr[] = "\r\nCommand accepted\r\n\r\n";
     usart_serial_write_packet(USART_DBG_PORT, readyStr, strlen((const char*)readyStr));
+    
+    msgParser.init(ctrlMsgRxBuffer, 100);
+    
+    INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART2_IRQ, AVR32_INTC_INT1);
+    AVR32_USART2.ier |= (1 << 0);
+    
+    //INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART3_IRQ, AVR32_INTC_INT1);
+    //AVR32_USART3.ier |= (1 << 0);
+    
+    gpio_enable_gpio_pin(MOTOR_CTRL_ENA_GPIO);
+    gpio_configure_pin(MOTOR_CTRL_ENA_GPIO, (GPIO_DIR_OUTPUT | GPIO_INIT_HIGH));
+    
+    //gpio_configure_pin(MOTOR_I1_TMR_T0A1_PIN, (GPIO_DIR_OUTPUT | GPIO_INIT_HIGH));
+    //gpio_configure_pin(MOTOR_I2_TMR_T0A1_PIN, (GPIO_DIR_OUTPUT | GPIO_INIT_LOW));
+    motor1.init(MOTOR_I1_TMR_T0A1_PIN, MOTOR_I1_TMR_T0A1_FUNCTION, MOTOR_I2_TMR_T0A1_PIN, MOTOR_I2_TMR_T0A1_FUNCTION, MOTOR1_TIMER, MOTOR1_TC_CHANNEL, 4000, 0);
+    motor2.init(MOTOR_I3_TMR_T0B2_PIN, MOTOR_I3_TMR_T0B2_FUNCTION, MOTOR_I4_TMR_T0B2_PIN, MOTOR_I4_TMR_T0B2_FUNCTION, MOTOR2_TIMER, MOTOR2_TC_CHANNEL, 4000, 0);
     
 	while(1)
 	{
+        /*
         for(uint16_t pos = 0; pos < 60000; pos += 5000)
         {
-            gpio_set_pin_high(RED_LED_GPIO);
             delay_s(1);
             
             for(uint16_t i = 0; i < 8; i++)
@@ -137,10 +229,15 @@ int main (void)
                 servos.setPos(i, pos);
             }
             
-            gpio_set_pin_low(RED_LED_GPIO);
             delay_s(1);
         }
+        */
         
+        if(gotMessage)
+        {
+            usart_serial_write_packet(USART_DBG_PORT, actStr, strlen((const char*)actStr));
+            gotMessage = 0;
+        }
         
 		
         adcifb_start_conversion_sequence((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS);

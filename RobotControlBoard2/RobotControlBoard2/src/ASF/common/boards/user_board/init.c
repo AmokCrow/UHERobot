@@ -37,7 +37,9 @@ void board_init(void)
     gpio_map_t USART2_GPIO_MAP =
     {
         {AVR32_USART2_TXD_0_1_PIN, AVR32_USART2_TXD_0_1_FUNCTION},
-        {AVR32_USART2_RXD_0_1_PIN, AVR32_USART2_RXD_0_1_FUNCTION}
+        {AVR32_USART2_RXD_0_1_PIN, AVR32_USART2_RXD_0_1_FUNCTION},
+        {AVR32_USART3_RXD_0_1_PIN, AVR32_USART3_RXD_0_1_FUNCTION},
+        {AVR32_USART3_TXD_0_1_PIN, AVR32_USART3_TXD_0_1_FUNCTION}
     };
     
     gpio_enable_module(USART2_GPIO_MAP, sizeof(USART2_GPIO_MAP) / sizeof(USART2_GPIO_MAP[0]));
@@ -51,6 +53,7 @@ void board_init(void)
     };
     
     usart_serial_init(USART_DBG_PORT, &usart_options);
+    usart_serial_init(USART_UPLINK_PORT, &usart_options);
     
     
     gpio_map_t ADC_GPIO_MAP =
@@ -90,6 +93,9 @@ void board_init(void)
     
     // Enable fast GPIO
     gpio_local_init();
+    
+    // Disable OSC32 output on PA20
+    gpio_enable_gpio_pin(AVR32_PIN_PA20);
     
     // Init timer 0 for motor control.
     

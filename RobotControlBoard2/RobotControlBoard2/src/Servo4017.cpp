@@ -17,7 +17,8 @@ void Servo4017::init(uint16_t gpioPinRst, uint16_t gpioPinClk, volatile avr32_tc
     // That is, start centered.
     for(uint16_t i = 0; i < numServoChannels; i++)
     {
-        mServoPositions[i] = 32768;
+        setPos(i, 32768);
+        //mServoPositions[i] = 32768;
     }
     
     mServoNum = 0;
@@ -217,6 +218,6 @@ void Servo4017::interruptCallback(void)
             gpio_local_clr_gpio_pin(mClkPin);
         }
         
-        
+        tc_write_rc(pmTimer, mTimerChannel, 7500 / 2);
     }
 }

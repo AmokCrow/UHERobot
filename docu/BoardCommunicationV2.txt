@@ -38,7 +38,11 @@ Length(1 Byte) | Msg type (1 Byte) | Data (1 - 253 bytes)
 Message content is specific to the devices conversing. The following are defined for the UHERobot v2 only.
 
 4.1 Daemon to Board:
-Length: 2 + 21 = 23
+Length: 2 + 21 = 23 (2*2 motors + 8*2 servos + 1 leds)
 Type: 0
-Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, signed) | ... | Servo 8 (2 Bytes, signed)
+Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, unsigned) | ... | Servo 8 (2 Bytes, unsigned)
 
+5. Examples and rubbish
+Motor testing command
+  L|C|Mo1|Mo2
+b060300000000e
