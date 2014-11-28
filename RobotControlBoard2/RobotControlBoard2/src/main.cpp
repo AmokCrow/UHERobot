@@ -37,6 +37,7 @@
 #include "adcifb.h"
 #include "Base16MsgParser.h"
 #include "MotorDriver.h"
+#include "PrintFunctions.h"
 
 volatile uint16_t inputVoltage = 0;
 volatile uint16_t boardCurrent = 0;
@@ -50,6 +51,7 @@ Servo4017 servos;
 Base16MsgParser msgParser;
 MotorDriver motor1;
 MotorDriver motor2;
+PrintFunctions dbgSerial;
 
 enum CtrlMsg
 {
@@ -169,8 +171,8 @@ int main (void)
 {	
     
     uint8_t printBuffer[100];
-    //float ftmp;
-    //float fvoltage;
+    volatile float ftmp;
+    volatile float fvoltage;
     
 	sysclk_init();
 	board_init();
@@ -199,7 +201,10 @@ int main (void)
     
     const uint8_t readyStr[] = "Ready...\r\n";
     const uint8_t actStr[] = "\r\nCommand accepted\r\n\r\n";
+    
     usart_serial_write_packet(USART_DBG_PORT, readyStr, strlen((const char*)readyStr));
+    dbgSerial.init(USART_DBG_PORT);
+    dbgSerial.printString("Ready...\r\n");
     
     msgParser.init(ctrlMsgRxBuffer, 100);
     
@@ -246,17 +251,39 @@ int main (void)
         //usart_serial_write_packet((volatile avr32_usart_t *)USART_DBG_PORT, (const uint8_t*)test_str, strlen(test_str));
 		
         delay_s(1);
-        /*
+        
         ftmp = voltFromAdc(inputVoltage);
         // Vadc = Vin / (10k + 1k) * 1k
         // -> Vin = Vadc * 11;
         ftmp *= 11;
-        sprintf(printBuffer, "Vin: 0x%X - %u - %.2fV\r\n", inputVoltage, inputVoltage, ftmp);
-        usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
-        */
+        //sprintf(printBuffer, "Vin: 0x%X - %u - %.2fV\r\n", inputVoltage, inputVoltage, ftmp);
+        dbgSerial.printString("Vin: ");
+        dbgSerial.floatToStr(printBuffer, ftmp);
+        dbgSerial.printUString(printBuffer);
+        dbgSerial.printString("V\r\n");
+        //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen((const char*)printBuffer));
+        
+        // Vcurr = I * R
+        // R = 0.04 Ohm
+        // Vcurrmeas = 100 * Vcurr
+        // Vcurradc = Vcurrmeas / (10k + 1k) * 1k
+        // 
+        // I = Vcurr / R
+        // Vcurr = Vcurrmeas / 100
+        // Vcurrmeas = Vcurradc * 11
+        //
+        // -> I = ((Vcurradc * 11.0) / 100.0) / 0.04 = Vcurradc * 11 / 100 / 0.04 = Vcurradc * 2.75
+        ftmp = voltFromAdc(boardCurrent);
+        ftmp *= 2750.0f;
+        
+        dbgSerial.printString("Iin: ");
+        dbgSerial.floatToStr(printBuffer, ftmp);
+        dbgSerial.printUString(printBuffer);
+        dbgSerial.printString("mA\r\n");
+        
         //sprintf((char*)printBuffer, "Iin: 0x%X - %u\r\n", boardCurrent, boardCurrent);
         //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen((const char*)printBuffer));
-        /*
+        
         // Vin = Vadc / 2 -> Vout = Vadc * 2
         fvoltage = voltFromAdc(boardTemperature) * 2.0f;
         // Sensor is MCP9700AT
@@ -265,9 +292,15 @@ int main (void)
         // Vout = temp * Tc + V0
         // temp = (Vout - V0) / Tc
         ftmp = (fvoltage - 0.5f) / 0.01f;
-        sprintf(printBuffer, "Temp: 0x%X - %u - %.2fdegC\r\n\r\n", boardTemperature, boardTemperature, ftmp);
-        usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
-        */
+        
+        dbgSerial.printString("Temp: ");
+        dbgSerial.floatToStr(printBuffer, ftmp);
+        dbgSerial.printUString(printBuffer);
+        dbgSerial.printString("degC\r\n\r\n");
+        
+        //sprintf(printBuffer, "Temp: 0x%X - %u - %.2fdegC\r\n\r\n", boardTemperature, boardTemperature, ftmp);
+        //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
+        
 	}
 
 	// Insert application code here, after the board has been initialized.

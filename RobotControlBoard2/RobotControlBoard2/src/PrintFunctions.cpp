@@ -7,8 +7,14 @@
 
 #include "PrintFunctions.h"
 
+
+void PrintFunctions::init(usart_if port)
+{
+    mUsart = port;
+}
+
 // Prints max 1 + 6 digits. The lowest 6.
-uint8_t* NumberToString(uint8_t* toBuffer, int32_t number)
+uint8_t* PrintFunctions::numberToString(uint8_t* toBuffer, int32_t number)
 {
     uint32_t uNumber;
     
@@ -24,7 +30,6 @@ uint8_t* NumberToString(uint8_t* toBuffer, int32_t number)
         uNumber = number;
     }
     
-    
     uint32_t divisor = 1000000UL;
     
     if(uNumber > divisor)
@@ -32,7 +37,7 @@ uint8_t* NumberToString(uint8_t* toBuffer, int32_t number)
         uNumber %= divisor;
     }
     
-    uint16_t charsLeft = 6;
+    uint16_t charsLeft = 7;
     
     while((uNumber < divisor) && (charsLeft > 1))
     {
@@ -45,7 +50,9 @@ uint8_t* NumberToString(uint8_t* toBuffer, int32_t number)
         *toBuffer = (uNumber / divisor) + '0';
         toBuffer++;
         
+        charsLeft--;
         uNumber %= divisor;
+        divisor /= 10;
     }
     
     // Trailing 0.
@@ -54,11 +61,11 @@ uint8_t* NumberToString(uint8_t* toBuffer, int32_t number)
     return toBuffer;
 }
 
-uint8_t* FloatToStr(uint8_t* toBuffer, float number)
+uint8_t* PrintFunctions::floatToStr(uint8_t* toBuffer, float number)
 {
     int32_t iNumber = (int32_t) number;
     
-    toBuffer = NumberToString(toBuffer, iNumber);
+    toBuffer = numberToString(toBuffer, iNumber);
     
     number -= iNumber;
     
@@ -71,17 +78,32 @@ uint8_t* FloatToStr(uint8_t* toBuffer, float number)
         number *= 100.0f;        
     }
     
-    iNumber = (uint32_t) number;
+    uint16_t uNumber = (uint16_t) number;
     
     *toBuffer = '.';
     toBuffer++;
     
-    toBuffer = NumberToString(toBuffer, iNumber);
     
-    if(toBuffer[-2] == ' ')
-    {
-        toBuffer[-2] = '0';
-    }
+    *toBuffer = (uNumber / 10) + '0';
+    toBuffer++;
+    *toBuffer = (uNumber % 10) + '0';
+    toBuffer++;
+    *toBuffer = 0;
+    
     
     return toBuffer;
 }    
+
+void PrintFunctions::printString(const char* str)
+{
+    printUString((const uint8_t*)str);
+}
+
+void PrintFunctions::printUString(const uint8_t* str)
+{
+    while(*str != 0)
+    {
+        usart_serial_putchar(mUsart, *str);
+        str++;
+    }
+}
