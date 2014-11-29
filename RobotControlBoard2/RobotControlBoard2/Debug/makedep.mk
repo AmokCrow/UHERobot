@@ -4,6 +4,20 @@
 
 RobotControlBoard2.cpp
 
+src\ASF\avr32\drivers\tc\tc.c
+
+src\ASF\avr32\drivers\twim\twim.c
+
+src\ASF\avr32\drivers\twis\twis.c
+
+src\Base16MsgParser.cpp
+
+src\MotorDriver.cpp
+
+src\PrintFunctions.cpp
+
+src\Servo4017.cpp
+
 src\AdcHandler.cpp
 
 src\ASF\avr32\drivers\adcifb\adcifb.c
@@ -40,5 +54,5 @@ src\ASF\common\services\clock\uc3l\sysclk.c
 
 src\ASF\common\services\serial\usart_serial.c
 
-src\main.c
+src\main.cpp
 

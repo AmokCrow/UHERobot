@@ -31,6 +31,8 @@
           <option id="avr32.drivers.adcifb" value="Add" config="" content-id="Atmel.ASF" />
           <option id="avr32.drivers.gpio" value="Add" config="" content-id="Atmel.ASF" />
           <option id="avr32.drivers.pdca" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="avr32.drivers.pm" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="avr32.drivers.scif" value="Add" config="" content-id="Atmel.ASF" />
           <option id="avr32.drivers.usart" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.services.basic.clock" value="Add" config="" content-id="Atmel.ASF" />
@@ -38,14 +40,16 @@
           <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.services.basic.serial" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.utils.interrupt" value="Add" config="" content-id="Atmel.ASF" />
-          <option id="avr32.drivers.scif" value="Add" config="" content-id="Atmel.ASF" />
-          <option id="avr32.drivers.pm" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="avr32.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="common.services.basic.twi" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="avr32.drivers.twim" value="Add" config="" content-id="Atmel.ASF" />
         </options>
         <configurations>
           <configuration key="config.avr32.utils.trampoline" value="yes" default="yes" content-id="Atmel.ASF" />
           <configuration key="config.avr32.utils.gccstartup" value="yes" default="yes" content-id="Atmel.ASF" />
           <configuration key="config.utils.interrupt.intc" value="yes" default="yes" content-id="Atmel.ASF" />
           <configuration key="config.avr32.drivers.intc.exception" value="yes" default="yes" content-id="Atmel.ASF" />
+          <configuration key="config.common.services.basic.twi.mode" value="both" default="both" content-id="Atmel.ASF" />
         </configurations>
         <files>
           <file path="src/ASF/avr32/drivers/intc/exception.S" framework="" version="" source="avr32/drivers/intc/exception.S" changed="False" content-id="Atmel.ASF" />
@@ -110,6 +114,16 @@
           <file path="src/ASF/avr32/drivers/pm/sleep.h" framework="" version="3.18.1" source="avr32\drivers\pm\sleep.h" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/avr32/drivers/scif/scif_uc3l.c" framework="" version="3.18.1" source="avr32\drivers\scif\scif_uc3l.c" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/avr32/drivers/scif/scif_uc3l.h" framework="" version="3.18.1" source="avr32\drivers\scif\scif_uc3l.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/tc/tc.c" framework="" version="3.18.1" source="avr32\drivers\tc\tc.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/tc/tc.h" framework="" version="3.18.1" source="avr32\drivers\tc\tc.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/twim/twim.c" framework="" version="3.18.1" source="avr32\drivers\twim\twim.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/twim/twim.h" framework="" version="3.18.1" source="avr32\drivers\twim\twim.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/Config/conf_twim.h" framework="" version="3.18.1" source="avr32\drivers\twim\module_config\conf_twim.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/twis/twis.c" framework="" version="3.18.1" source="avr32\drivers\twis\twis.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/avr32/drivers/twis/twis.h" framework="" version="3.18.1" source="avr32\drivers\twis\twis.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/Config/conf_twis.h" framework="" version="3.18.1" source="avr32\drivers\twis\module_config\conf_twis.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/common/services/twi/uc3_twim/twi_master.h" framework="" version="3.18.1" source="common\services\twi\uc3_twim\twi_master.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/common/services/twi/twi_master.h" framework="" version="3.18.1" source="common\services\twi\twi_master.h" changed="False" content-id="Atmel.ASF" />
         </files>
         <documentation help="http://asf.atmel.com/docs/3.18.1/common.applications.user_application.user_board.uc3l/html/index.html" />
         <offline-documentation help="" />
@@ -171,6 +185,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcc.compiler.directories.IncludePaths>
         <avr32gcc.compiler.optimization.level>Optimize for size (-Os)</avr32gcc.compiler.optimization.level>
@@ -209,6 +227,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.compiler.directories.IncludePaths>
         <avr32gcccpp.compiler.optimization.level>Optimize for size (-Os)</avr32gcccpp.compiler.optimization.level>
@@ -247,6 +269,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.assembler.general.IncludePaths>
         <avr32gcccpp.preprocessingassembler.general.IncludePaths>
@@ -273,6 +299,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.preprocessingassembler.general.IncludePaths>
       </Avr32GccCpp>
@@ -315,9 +345,13 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcc.compiler.directories.IncludePaths>
-        <avr32gcc.compiler.optimization.level>Optimize (-O1)</avr32gcc.compiler.optimization.level>
+        <avr32gcc.compiler.optimization.level>Optimize for size (-Os)</avr32gcc.compiler.optimization.level>
         <avr32gcc.compiler.optimization.OtherFlags>-fdata-sections</avr32gcc.compiler.optimization.OtherFlags>
         <avr32gcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</avr32gcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
         <avr32gcc.compiler.optimization.UseAssemblerForPseudoInstructions>True</avr32gcc.compiler.optimization.UseAssemblerForPseudoInstructions>
@@ -354,10 +388,15 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.compiler.directories.IncludePaths>
-        <avr32gcccpp.compiler.optimization.level>Optimize (-O1)</avr32gcccpp.compiler.optimization.level>
+        <avr32gcccpp.compiler.optimization.level>Optimize for size (-Os)</avr32gcccpp.compiler.optimization.level>
         <avr32gcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</avr32gcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <avr32gcccpp.compiler.optimization.PrepareDataForGarbageCollection>True</avr32gcccpp.compiler.optimization.PrepareDataForGarbageCollection>
         <avr32gcccpp.compiler.optimization.UseAssemblerForPseudoInstructions>True</avr32gcccpp.compiler.optimization.UseAssemblerForPseudoInstructions>
         <avr32gcccpp.compiler.optimization.DebugLevel>Maximum (-g3)</avr32gcccpp.compiler.optimization.DebugLevel>
         <avr32gcccpp.compiler.warnings.AllWarnings>True</avr32gcccpp.compiler.warnings.AllWarnings>
@@ -394,6 +433,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.assembler.general.IncludePaths>
         <avr32gcccpp.assembler.debugging.DebugLevel>Default (-g)</avr32gcccpp.assembler.debugging.DebugLevel>
@@ -421,6 +464,10 @@
             <Value>../src/ASF/common/services/serial</Value>
             <Value>../src/ASF/avr32/drivers/pm</Value>
             <Value>../src/ASF/avr32/drivers/scif</Value>
+            <Value>../src/ASF/avr32/drivers/tc</Value>
+            <Value>../src/ASF/avr32/drivers/twim</Value>
+            <Value>../src/ASF/avr32/drivers/twis</Value>
+            <Value>../src/ASF/common/services/twi</Value>
           </ListValues>
         </avr32gcccpp.preprocessingassembler.general.IncludePaths>
         <avr32gcccpp.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</avr32gcccpp.preprocessingassembler.debugging.DebugLevel>
@@ -429,6 +476,60 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="RobotControlBoard2.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\avr32\drivers\tc\tc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\avr32\drivers\tc\tc.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\avr32\drivers\twim\twim.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\avr32\drivers\twim\twim.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\config\conf_twim.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\avr32\drivers\twis\twis.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\avr32\drivers\twis\twis.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\config\conf_twis.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\twi\uc3_twim\twi_master.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\twi\twi_master.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\Base16MsgParser.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Base16MsgParser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\MotorDriver.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\MotorDriver.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PrintFunctions.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PrintFunctions.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Servo4017.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Servo4017.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\asf.h">
@@ -623,7 +724,7 @@
     <None Include="src\config\conf_usart_serial.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\main.c">
+    <Compile Include="src\main.cpp">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
@@ -641,6 +742,9 @@
     <Folder Include="src\ASF\avr32\drivers\pdca\" />
     <Folder Include="src\ASF\avr32\drivers\pm\" />
     <Folder Include="src\ASF\avr32\drivers\scif\" />
+    <Folder Include="src\ASF\avr32\drivers\tc\" />
+    <Folder Include="src\ASF\avr32\drivers\twim\" />
+    <Folder Include="src\ASF\avr32\drivers\twis\" />
     <Folder Include="src\ASF\avr32\drivers\usart\" />
     <Folder Include="src\ASF\avr32\utils\" />
     <Folder Include="src\ASF\avr32\utils\header_files\" />
@@ -658,6 +762,8 @@
     <Folder Include="src\ASF\common\services\ioport\uc3\" />
     <Folder Include="src\ASF\common\services\serial\" />
     <Folder Include="src\ASF\common\services\serial\uc3_usart\" />
+    <Folder Include="src\ASF\common\services\twi\" />
+    <Folder Include="src\ASF\common\services\twi\uc3_twim\" />
     <Folder Include="src\ASF\common\utils\" />
     <Folder Include="src\ASF\common\utils\interrupt\" />
     <Folder Include="src\config\" />

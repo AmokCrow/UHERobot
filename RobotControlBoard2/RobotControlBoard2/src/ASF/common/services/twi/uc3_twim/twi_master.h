@@ -1,9 +1,13 @@
-/**
- * \file *********************************************************************
+/*****************************************************************************
  *
- * \brief USART Serial configuration
+ * \file
  *
- * Copyright (c) 2011 Atmel Corporation. All rights reserved.
+ * \brief TWI Master driver for AVR UC3.
+ *
+ * This file defines a useful set of functions for the TWIM interface on AVR UC3
+ * devices.
+ *
+ * Copyright (c) 2009-2012 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -39,20 +43,35 @@
  *
  * \asf_license_stop
  *
- */
+ ******************************************************************************/
 
-#ifndef CONF_USART_SERIAL_H_INCLUDED
-#define CONF_USART_SERIAL_H_INCLUDED
 
-#include <asf.h>
-#include <usart.h>
+#ifndef _TWI_MASTER_H_
+#define _TWI_MASTER_H_
 
-#define CONFIG_USART_SERIAL_MODE    USART_NORMAL_CHMODE
+#include "compiler.h"
+#include "sysclk.h"
+#include "status_codes.h"
+#include "twim.h"
 
-#define USART_DBG_PORT      (avr32_usart_t*)AVR32_USART2_ADDRESS
-#define USART_DBG_BAUDRATE  115200UL
+typedef volatile avr32_twi_t *twi_master_t;
+typedef twi_options_t twi_master_options_t;
 
-#define USART_UPLINK_PORT      (avr32_usart_t*)AVR32_USART3_ADDRESS
-#define USART_UPLINK_BAUDRATE  115200UL
+static inline int twi_master_setup(twi_master_t twi, twi_master_options_t *opt)
+{
+  int status;
+  opt->pba_hz = sysclk_get_pba_hz();
+#if UC3D
+    sysclk_enable_pba_module(SYSCLK_TWIM);
+#else
+    if ((uint32_t)twi == AVR32_TWIM0_ADDRESS) {
+        sysclk_enable_pba_module(SYSCLK_TWIM0);
+    } else if ((uint32_t)twi == AVR32_TWIM1_ADDRESS) {
+        sysclk_enable_pba_module(SYSCLK_TWIM1);
+    }
+#endif
+  status = twi_master_init(twi, (const twi_master_options_t *)opt);
+  return(status);
+}
 
-#endif /* CONF_USART_SERIAL_H_INCLUDED */
+#endif  // _TWI_MASTER_H_

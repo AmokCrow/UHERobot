@@ -45,6 +45,10 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \defgroup group_avr32_drivers_gpio GPIO - General-Purpose Input/Output
  *
@@ -426,5 +430,9 @@ uint32_t gpio_configure_pin_periph_event_mode(uint32_t pin, uint32_t mode,
 #endif
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _GPIO_H_ */

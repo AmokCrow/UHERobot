@@ -44,6 +44,10 @@
 #ifndef _ADCIFB_H_
 #define _ADCIFB_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \defgroup group_avr32_drivers_adcifb ADCIFB - ADC Interface B
  *
@@ -594,5 +598,9 @@ static inline void adcifb_clear_data_ready_interrupt_flag(
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _ADCIFB_H_ */
