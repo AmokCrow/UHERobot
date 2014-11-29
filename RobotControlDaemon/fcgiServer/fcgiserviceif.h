@@ -4,6 +4,8 @@
 #include <string>
 #include <list>
 
+#include "DataExchangeStructures.h"
+
 namespace JsWebUtils
 {
 
@@ -11,23 +13,8 @@ class FcgiServiceIf
 {
 public:
 
-
-
-    struct PrintableParamDyn
-    {
-        std::string name;
-        std::string value;
-    };
-
-    struct PrintableParamStat
-    {
-        const char* name;
-        const char* value;
-        PrintableParamStat* next;
-    };
-
     virtual ~FcgiServiceIf() { }
-    virtual void serveCall(const std::string& query, const PrintableParamStat* &responseStatics, std::list<PrintableParamDyn>& responseDynamics) = 0;
+    virtual void serveCall(const std::string& query, const DExGeneralParam* &retResponseStatics, unsigned int& retNumItems) = 0;
 
 };
 

@@ -59,15 +59,15 @@ void FcgiServer::run()
 {
     std::string query;
     std::string uri;
-    std::list<FcgiServiceIf::PrintableParamDyn> dynamics;
-    const FcgiServiceIf::PrintableParamStat* par;
+    const DExGeneralParam* clientReturnItems;
+    unsigned int numReturnedItems;
 
     while(FCGX_Accept_r(&requestM) >= 0)
     {
         uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
         std::cout << "Got request. URI: " << uri << "QUERY: " << query << std::endl;
-        pClientM->serveCall(query, par, dynamics);
+        pClientM->serveCall(query, clientReturnItems, numReturnedItems);
         std::cout << "Served" << std::endl;
         if(std::string::npos != uri.find("api"))
         {
@@ -75,16 +75,16 @@ void FcgiServer::run()
             FCGX_FPrintF(requestM.out, "Content-type: application/json\r\n\r\n");
 
             FCGX_FPrintF(requestM.out, "{");
-            for(; par != NULL; par = par->next)
+            for(unsigned int i = 0; i < numReturnedItems; i++)
             {
-                std::cout << par->name << std::endl;
-                if(par->next == NULL)
+                std::cout << clientReturnItems[i].apiMarker << std::endl;
+                if(i == (numReturnedItems - 1))
                 {
-                    FCGX_FPrintF(requestM.out, " \"%s : %s\" ", par->name, par->value);
+                    FCGX_FPrintF(requestM.out, " \"%s : %f\" ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
                 }
                 else
                 {
-                    FCGX_FPrintF(requestM.out, " \"%s : %s\", ", par->name, par->value);
+                    FCGX_FPrintF(requestM.out, " \"%s : %f\", ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
                 }
             }
 

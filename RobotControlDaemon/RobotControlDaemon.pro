@@ -21,5 +21,6 @@ HEADERS += \
     base16message.h \
     fcgiServer/fcgiserver.h \
     fcgiServer/fcgiserviceif.h \
-    debuglog.h
+    debuglog.h \
+    DataExchangeStructures.h
 
