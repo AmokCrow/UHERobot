@@ -12,10 +12,6 @@ using namespace JsWebUtils;
 ControlLogic::ControlLogic(const char* serialPort)
     : serialChannel(serialPort)
     , mServer(this)
-    , mVoltage(0)
-    , mfVoltage(0.0f)
-    , mCurrent(0)
-    , mfCurrent(0.0f)
     , mLog(50)
 {
 

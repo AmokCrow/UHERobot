@@ -49,14 +49,10 @@ private:
   bool mShouldRun;
 
   int serialFileDescriptor;
+
   MessageParser serialChannel;
 
   FcgiServer mServer;
-
-  uint16_t mVoltage;
-  float mfVoltage;
-  uint16_t mCurrent;
-  float mfCurrent;
 
   DebugLog mLog;
 };

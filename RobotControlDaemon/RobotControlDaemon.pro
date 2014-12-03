@@ -12,7 +12,8 @@ SOURCES += main.cpp \
     ControlLogic.cpp \
     base16message.cpp \
     fcgiServer/fcgiserver.cpp \
-    debuglog.cpp
+    debuglog.cpp \
+    robotboard2interpreter.cpp
 
 HEADERS += \
     MessageParser.h \
@@ -22,5 +23,6 @@ HEADERS += \
     fcgiServer/fcgiserver.h \
     fcgiServer/fcgiserviceif.h \
     debuglog.h \
-    DataExchangeStructures.h
+    DataExchangeStructures.h \
+    robotboard2interpreter.h
 
