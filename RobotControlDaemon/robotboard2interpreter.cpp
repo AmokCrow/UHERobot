@@ -21,7 +21,18 @@ RobotBoard2Interpreter::RobotBoard2Interpreter()
 
     printableParams[BatteryCurrent].prefix = mStrBrdCurr;
     printableParams[BatteryCurrent].suffix = mStrCurrent;
-    printableParams[Temperature] = {};
-    printableParams[BatteryStatus] = {};
+    printableParams[BatteryCurrent].value = 0.0f;
+    printableParams[BatteryCurrent].apiMarker = mStrJsonBrdCurr;
+
+    printableParams[Temperature].prefix = mStrBrdTemp;
+    printableParams[Temperature].suffix = mStrTemp;
+    printableParams[Temperature].value = 0.0f;
+    printableParams[Temperature].apiMarker = mStrJsonBrdTemp;
+
+
+    printableParams[BatteryStatus].prefix = mStrBattCap;
+    printableParams[BatteryStatus].suffix = mStrPercent;
+    printableParams[BatteryStatus].value = 0.0f;
+    printableParams[BatteryStatus].apiMarker = mStrJsonBattStat;
 
 }

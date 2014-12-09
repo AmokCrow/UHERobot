@@ -11,23 +11,26 @@ public:
 
     // Values from sensors
     void setParamsSerial(uint8_t buff, uint16_t buffLength);
-    float getBattVotage();
-    float getBattCurrent();
-    float getBoardTemperature();
+    float getBattVoltage() { return printableParams[BattVoltage].value; }
+    float getBattStatus() { return printableParams[BatteryStatus].value; }
+    float getBattCurrent() { return printableParams[BatteryCurrent].value; }
+    float getBoardTemperature() { return printableParams[Temperature].value; }
+
 
     // Values to be sent to the robot
-    void setRightMotor(int percent);
-    void setLeftMotor(int percent);
-    void setCameraPan(int percent);
-    void setCameraTilt(int percent);
-    void getSettingPacket(const uint8_t*& outPacketLoc, uint16_t& outPacketLength);
+    void setRightMotor(int percent) { }
+    void setLeftMotor(int percent) { }
+    void setCameraPan(int percent) { }
+    void setCameraTilt(int percent) { }
+    void getSettingPacket(const uint8_t*& outPacketLoc, uint16_t& outPacketLength) { }
 
     // For serving web requests
-    const JsWebUtils::DExGeneralParam* getPrintables();
+    const JsWebUtils::DExGeneralParam* getPrintables() { return (const JsWebUtils::DExGeneralParam*) printableParams; }
     const unsigned int getNumPrintables() { return NumParams; }
 
 private:
 
+    static const char mStrBattCap[] = "Battery Capacity";
     static const char mStrPercent[] = "%";
     static const char mStrBattVolt[] = "Battery Voltage";
     static const char mStrVolt[] = "V";
