@@ -20,6 +20,7 @@
 #include "fcgiServer/fcgiserviceif.h"
 #include "fcgiServer/fcgiserver.h"
 #include "debuglog.h"
+#include "robotboard2interpreter.h"
 
 #include <cstdint>
 
@@ -40,7 +41,7 @@ public:
   // The return value is a linked list of status values for printing.
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
 
-  virtual void serveCall(const std::string& query, const PrintableParamStat* &responseStatics, std::list<PrintableParamDyn>& responseDynamics);
+  virtual void serveCall(const std::string& query, const DExGeneralParam *&retResponseStatics, unsigned int &retNumItems);
   
 private:
 
@@ -55,6 +56,10 @@ private:
   FcgiServer mServer;
 
   DebugLog mLog;
+
+  RobotBoard2Interpreter mInterpreter;
+
+  volatile unsigned int mReceivedCommand;
 };
 
 #endif // CONTROL_LOGIC__H

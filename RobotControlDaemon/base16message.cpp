@@ -273,7 +273,7 @@ void Base16Message::byteToB16(char src, char* dest)
     }
     else
     {
-        tmp += 'A';
+        tmp += 'A' - 10;
     }
 
     dest[0] = tmp;

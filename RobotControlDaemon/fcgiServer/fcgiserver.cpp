@@ -88,6 +88,7 @@ void FcgiServer::run()
                 }
             }
 
+            /*
             while(!dynamics.empty())
             {
                 FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
@@ -98,6 +99,7 @@ void FcgiServer::run()
                     FCGX_FPrintF(requestM.out, ", ");
                 }
             }
+            */
             FCGX_FPrintF(requestM.out, "}\r\n");
         }
         else // Serve as a normal HTML query
@@ -105,12 +107,12 @@ void FcgiServer::run()
             FCGX_FPrintF(requestM.out, "Content-type: text/html\r\n\r\n");
 
             FCGX_FPrintF(requestM.out, "<h1>Server says</h1>\r\n<p>\r\n");
-            for(; par != NULL; par = par->next)
+            for(unsigned int i = 0; i < numReturnedItems; i++)
             {
-                std::cout << par->name << std::endl;
-                FCGX_FPrintF(requestM.out, "%s : %s <br>\r\n", par->name, par->value);
+                std::cout << clientReturnItems[i].prefix << clientReturnItems[i].value << clientReturnItems[i].suffix << std::endl;
+                FCGX_FPrintF(requestM.out, "%s : %f %s <br>\r\n", clientReturnItems[i].prefix, clientReturnItems[i].value, clientReturnItems[i].suffix);
             }
-
+/*
             while(!dynamics.empty())
             {
                 FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
@@ -121,6 +123,7 @@ void FcgiServer::run()
                     FCGX_FPrintF(requestM.out, ", <br>");
                 }
             }
+            */
             FCGX_FPrintF(requestM.out, "</p>\r\n");
         }
         std::cout << "Finished" << std::endl;

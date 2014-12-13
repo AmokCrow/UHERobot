@@ -42,6 +42,11 @@ Length: 2 + 21 = 23 (2*2 motors + 8*2 servos + 1 leds)
 Type: 0
 Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, unsigned) | ... | Servo 8 (2 Bytes, unsigned)
 
+4.2 Board to Daemon
+Length: 2 + 6 = 8 (2 voltage + 2 current + 2 temperature)
+Type: 1
+Data: Voltage in mV (2 bytes, signed) | Current in mA (2 bytes, signed) | Temperature in mC (2 bytes, signed)
+
 5. Examples and rubbish
 Motor testing command
   L|C|Mo1|Mo2

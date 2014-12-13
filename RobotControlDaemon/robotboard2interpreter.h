@@ -4,13 +4,16 @@
 
 #include "DataExchangeStructures.h"
 
+#include <stdint.h>
+#include <pthread.h>
+
 class RobotBoard2Interpreter
 {
 public:
     RobotBoard2Interpreter();
 
     // Values from sensors
-    void setParamsSerial(uint8_t buff, uint16_t buffLength);
+    void setParamsSerial(const uint8_t* buff, uint16_t buffLength);
     float getBattVoltage() { return printableParams[BattVoltage].value; }
     float getBattStatus() { return printableParams[BatteryStatus].value; }
     float getBattCurrent() { return printableParams[BatteryCurrent].value; }
@@ -18,30 +21,35 @@ public:
 
 
     // Values to be sent to the robot
-    void setRightMotor(int percent) { }
-    void setLeftMotor(int percent) { }
-    void setCameraPan(int percent) { }
-    void setCameraTilt(int percent) { }
-    void getSettingPacket(const uint8_t*& outPacketLoc, uint16_t& outPacketLength) { }
+    void setRightMotor(int percent);
+    void setLeftMotor(int percent);
+    void setCameraPan(int degrees);
+    void setCameraTilt(int degrees);
+    void setServoPos(unsigned int servoNum, uint16_t pos);
+    void setLed(unsigned int ledNum, bool on);
+    void getSettingPacket(uint8_t* outPacketLoc, unsigned int &outPacketLength);
 
     // For serving web requests
     const JsWebUtils::DExGeneralParam* getPrintables() { return (const JsWebUtils::DExGeneralParam*) printableParams; }
-    const unsigned int getNumPrintables() { return NumParams; }
+    unsigned int getNumPrintables() { return NumParams; }
 
 private:
 
-    static const char mStrBattCap[] = "Battery Capacity";
-    static const char mStrPercent[] = "%";
-    static const char mStrBattVolt[] = "Battery Voltage";
-    static const char mStrVolt[] = "V";
-    static const char mStrCurrent[] = "I";
-    static const char mStrBrdTemp[] = "Board temperature";
-    static const char mStrTemp[] = "C";
-    static const char mStrBrdCurr[] = "Board current";
-    static const char mStrJsonBattVolt[] = "bv";
-    static const char mStrJsonBrdCurr[] = "bc";
-    static const char mStrJsonBrdTemp[] = "bt";
-    static const char mStrJsonBattStat[] = "bs";
+    void enterProtected();
+    void exitProtected();
+
+    static const char mStrBattCap[];
+    static const char mStrPercent[];
+    static const char mStrBattVolt[];
+    static const char mStrVolt[];
+    static const char mStrCurrent[];
+    static const char mStrBrdTemp[];
+    static const char mStrTemp[];
+    static const char mStrBrdCurr[];
+    static const char mStrJsonBattVolt[];
+    static const char mStrJsonBrdCurr[];
+    static const char mStrJsonBrdTemp[];
+    static const char mStrJsonBattStat[];
 
     enum eParams
     {
@@ -56,7 +64,22 @@ private:
         NumParams
     };
 
+    enum eParamWidths
+    {
+        MsgLengthLen = 1,
+        MsgTypeLen = 1,
+        LedsLen = 1,
+        MotorLen = 2,
+        ServoLen = 2
+    };
+
+    static const unsigned int TX_BUFF_SIZE = 25;
+    static const unsigned int TX_CONTENT_SIZE = 23;
+
     JsWebUtils::DExGeneralParam printableParams[NumParams];
+    uint8_t mTxBuff[TX_BUFF_SIZE];
+
+    pthread_mutex_t mMutex;
 
 };
 
