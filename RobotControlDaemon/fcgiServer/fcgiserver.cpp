@@ -80,11 +80,11 @@ void FcgiServer::run()
                 std::cout << clientReturnItems[i].apiMarker << std::endl;
                 if(i == (numReturnedItems - 1))
                 {
-                    FCGX_FPrintF(requestM.out, " \"%s : %f\" ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
+                    FCGX_FPrintF(requestM.out, " \"%s\" : \"%f\" ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
                 }
                 else
                 {
-                    FCGX_FPrintF(requestM.out, " \"%s : %f\", ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
+                    FCGX_FPrintF(requestM.out, " \"%s\" : \"%f\", ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
                 }
             }
 

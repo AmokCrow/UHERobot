@@ -56,7 +56,9 @@ void ControlLogic::run()
         //serialChannel.sendMessage(message);
 
         // std::cout << "Sent hartbeat" << std::endl;
-        roundCounter++;
+
+        // Note!: For development only, a timed turn-off.
+        //roundCounter++;
 
         if(mReceivedCommand == 1)
         {
