@@ -45,7 +45,7 @@ Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, sig
 4.2 Board to Daemon
 Length: 2 + 6 = 8 (2 voltage + 2 current + 2 temperature)
 Type: 1
-Data: Voltage in mV (2 bytes, signed) | Current in mA (2 bytes, signed) | Temperature in mC (2 bytes, signed)
+Data: Voltage in V/100 (2 bytes, signed) | Current in mA (2 bytes, signed) | Temperature in C/100 (2 bytes, signed)
 
 5. Examples and rubbish
 Motor testing command

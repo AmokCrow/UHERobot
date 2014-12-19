@@ -147,9 +147,9 @@ void Base16MsgParser::encodeChar(uint8_t ch)
         return;
     }
     
-    uint8_t tmp = ch & 0x0F;
+    uint8_t tmp = (ch >> 4) & 0x0F;
     
-    if(tmp <= 10)
+    if(tmp < 10)
     {
         mpBuffer[mNumBytesInBuffer] = tmp + '0';
     }
@@ -159,9 +159,9 @@ void Base16MsgParser::encodeChar(uint8_t ch)
     }
     mNumBytesInBuffer++;
     
-    tmp = ch >> 4;
+    tmp = ch & 0x0F;
     
-    if(tmp <= 10)
+    if(tmp < 10)
     {
         mpBuffer[mNumBytesInBuffer] = tmp + '0';
     }
@@ -183,6 +183,7 @@ void Base16MsgParser::encodeBuffer(uint8_t* buffer, uint8_t length)
 uint8_t Base16MsgParser::finalizeMsg()
 {
     mpBuffer[mNumBytesInBuffer] = 'e';
+    mNumBytesInBuffer++;
     return mNumBytesInBuffer;
 }
 
