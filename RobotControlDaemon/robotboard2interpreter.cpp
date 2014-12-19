@@ -2,6 +2,9 @@
 #include <cstring>
 #include <cstdint>
 
+#include <iostream>
+#include <cstdio>
+
 const char RobotBoard2Interpreter::mStrBattCap[] = "Battery Capacity";
 const char RobotBoard2Interpreter::mStrPercent[] = "%";
 const char RobotBoard2Interpreter::mStrBattVolt[] = "Battery Voltage";
@@ -63,8 +66,9 @@ void RobotBoard2Interpreter::getSettingPacket(uint8_t* outPacketLoc, unsigned in
 
 void RobotBoard2Interpreter::setParamsSerial(const uint8_t *buff, uint16_t buffLength)
 {
-    if(!((buffLength == 8) && (buff[0] == 1) && (buff[1] == 8)))
+    if(!((buffLength == 8) && (buff[1] == 1) && (buff[0] == 8)))
     {
+        std::cout << "Bad msg: len " << (unsigned int)buffLength << " - reported " << (unsigned int)buff[0] << ", type " << (unsigned int)buff[1] << std::endl;
         return;
     }
 
@@ -73,7 +77,7 @@ void RobotBoard2Interpreter::setParamsSerial(const uint8_t *buff, uint16_t buffL
 
     itmp = (buff[2] << 8) | buff[3];
     ftmp = itmp;
-    ftmp /= 1000.0f;
+    ftmp /= 100.0f;
     printableParams[BattVoltage].value = ftmp;
     // Battery voltage area is approximately 12.6V - 8V.
     // This is a bad estimation, but shall suffice for now.
@@ -81,13 +85,12 @@ void RobotBoard2Interpreter::setParamsSerial(const uint8_t *buff, uint16_t buffL
 
     itmp = (buff[4] << 8) | buff[5];
     ftmp = itmp;
-    ftmp /= 1000.0f;
     printableParams[BatteryCurrent].value = ftmp;
 
     itmp = (buff[6] << 8) | buff[7];
     ftmp = itmp;
-    ftmp /= 1000.0f;
-    printableParams[BatteryCurrent].value = ftmp;
+    ftmp /= 100.0f;
+    printableParams[Temperature].value = ftmp;
 }
 
 void RobotBoard2Interpreter::enterProtected()

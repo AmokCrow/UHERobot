@@ -54,9 +54,8 @@ class Base16Message
     void classyError(const char* const msg);
 
     static const int MAX_MSG_LEN = UHEROBOT_BOARD_MSG_MAX_LEN_BYTES;
-    static const int MAX_MSG_HEADER_LEN = UHEROBOT_BOARD_MSG_HEADER_MAX_LEN;
     // The start and end bytes take 2 bytes
-    static const int MAX_BUFF_SIZE = (MAX_MSG_HEADER_LEN + MAX_MSG_LEN) * 2 + 2;
+    static const int MAX_BUFF_SIZE = MAX_MSG_LEN * 2 + 2;
 
     char mUnencodedBuff[MAX_MSG_LEN];
     int mNumBytesUnencoded;

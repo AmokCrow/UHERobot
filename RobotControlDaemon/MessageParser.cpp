@@ -35,8 +35,8 @@ void MessageParser::init()
    mOldTtyDefinitions = tty;
    
    // TODO: Make the interface speed a constructor parameter.
-   cfsetospeed (&tty, (speed_t)B9600);
-   cfsetispeed (&tty, (speed_t)B9600);
+   cfsetospeed (&tty, (speed_t)B115200);
+   cfsetispeed (&tty, (speed_t)B115200);
    
    // Port settings to 8n1
    tty.c_cflag     &=  ~PARENB;

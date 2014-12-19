@@ -219,7 +219,7 @@ bool Base16Message::decode()
         return false;
     }
 
-    if(mNumBytesEncoded < (2 + (MAX_MSG_HEADER_LEN * 2)))
+    if(mNumBytesEncoded < 2)
     {
         classyError("Too few half-bytes in a message");
         clear();
@@ -227,7 +227,7 @@ bool Base16Message::decode()
     }
 
     // start from beginning of message body and hop per Base16 pair
-    int rawPos = 1 + (MAX_MSG_HEADER_LEN * 2);
+    int rawPos = 1;
     int dataPos = 0;
     while(rawPos < mNumBytesEncoded)
     {
