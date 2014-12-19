@@ -44,14 +44,19 @@ volatile uint16_t boardCurrent = 0;
 volatile uint16_t boardTemperature = 0;
 
 volatile uint8_t gotMessage = 0;
+volatile uint16_t msgTimeoutCounter = 0;
 
 uint8_t ctrlMsgRxBuffer[100];
+uint8_t ctrlMsgTxBuffer[100];
 
 Servo4017 servos;
 Base16MsgParser msgParser;
+Base16MsgParser txParser;
 MotorDriver motor1;
 MotorDriver motor2;
 PrintFunctions dbgSerial;
+
+#define CTRL_FROM_DBG 1
 
 enum CtrlMsg
 {
@@ -105,6 +110,14 @@ void decipherCtrlMsg(uint8_t length)
         {
             gpio_local_clr_gpio_pin(RED_LED_GPIO);
         }
+        
+        motor1.setSpeed((ctrlMsgRxBuffer[3] << 8) | ctrlMsgRxBuffer[4]);
+        motor2.setSpeed((ctrlMsgRxBuffer[5] << 8) | ctrlMsgRxBuffer[6]);
+        
+        for(uint16_t i = 0; i < 8; i++)
+        {
+            servos.setPos(i, ((uint16_t)ctrlMsgRxBuffer[7 + i] << 8) | ctrlMsgRxBuffer[8 + i]);
+        }
     }
     else if(msgType == 1) // Debug led test message, with only the led byte
     {
@@ -128,6 +141,7 @@ void decipherCtrlMsg(uint8_t length)
         motor2.setSpeed((ctrlMsgRxBuffer[4] << 8) | ctrlMsgRxBuffer[5]);
     }
     
+    gotMessage = 1;
     // If it was not a good message, the next incoming byte will take care of it in any case
 }
 
@@ -138,7 +152,6 @@ __attribute__((__interrupt__)) static void ctrl_uart_interrupt(void)
     if(usart_test_hit(USART_DBG_PORT))
     //while(usart_test_hit(USART_UPLINK_PORT))
     {
-        gotMessage = 1;
         tmpChar = 0xFF & usart_getchar(USART_DBG_PORT);
         usart_putchar(USART_DBG_PORT, tmpChar);
         //tmpChar = 0xFF & usart_getchar(USART_UPLINK_PORT);
@@ -151,7 +164,7 @@ __attribute__((__interrupt__)) static void ctrl_uart_interrupt(void)
     }
     else
     {
-        gotMessage = 1;
+        // gotMessage = 1;
     }
 }
 
@@ -202,11 +215,12 @@ int main (void)
     const uint8_t readyStr[] = "Ready...\r\n";
     const uint8_t actStr[] = "\r\nCommand accepted\r\n\r\n";
     
-    usart_serial_write_packet(USART_DBG_PORT, readyStr, strlen((const char*)readyStr));
+    //usart_serial_write_packet(USART_DBG_PORT, readyStr, strlen((const char*)readyStr));
     dbgSerial.init(USART_DBG_PORT);
-    dbgSerial.printString("Ready...\r\n");
+    //dbgSerial.printString("Ready...\r\n");
     
     msgParser.init(ctrlMsgRxBuffer, 100);
+    txParser.init(ctrlMsgTxBuffer, 100);
     
     INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART2_IRQ, AVR32_INTC_INT1);
     AVR32_USART2.ier |= (1 << 0);
@@ -240,10 +254,22 @@ int main (void)
         
         if(gotMessage)
         {
-            usart_serial_write_packet(USART_DBG_PORT, actStr, strlen((const char*)actStr));
+            msgTimeoutCounter = 0;
             gotMessage = 0;
+            // usart_serial_write_packet(USART_DBG_PORT, actStr, strlen((const char*)actStr));
         }
-        
+        else
+        {
+            msgTimeoutCounter++;
+            
+            if(msgTimeoutCounter > 4)
+            {
+                Disable_global_interrupt();
+                motor1.setSpeed(0);
+                motor2.setSpeed(0);
+                Enable_global_interrupt();
+            }
+        }
 		
         adcifb_start_conversion_sequence((avr32_adcifb_t*)AVR32_ADCIFB_ADDRESS);
         
@@ -252,17 +278,31 @@ int main (void)
 		
         delay_s(1);
         
+        
         ftmp = voltFromAdc(inputVoltage);
         // Vadc = Vin / (10k + 1k) * 1k
         // -> Vin = Vadc * 11;
         ftmp *= 11;
-        //sprintf(printBuffer, "Vin: 0x%X - %u - %.2fV\r\n", inputVoltage, inputVoltage, ftmp);
+        
+        int16_t stmp;
+        uint8_t ctmp;
+        
+#if CTRL_FROM_DBG
+        txParser.reset();
+        txParser.encodeChar(8);
+        txParser.encodeChar(1);
+        
+        stmp = ftmp * 100.0f;
+        ctmp = (stmp >> 8) & 0xFF;
+        txParser.encodeChar(ctmp);
+        ctmp = stmp & 0xFF;
+        txParser.encodeChar(ctmp);
+#else
         dbgSerial.printString("Vin: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
         dbgSerial.printString("V\r\n");
-        //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen((const char*)printBuffer));
-        
+#endif
         // Vcurr = I * R
         // R = 0.04 Ohm
         // Vcurrmeas = 100 * Vcurr
@@ -276,11 +316,18 @@ int main (void)
         ftmp = voltFromAdc(boardCurrent);
         ftmp *= 2750.0f;
         
+#if CTRL_FROM_DBG
+        stmp = ftmp;
+        ctmp = (stmp >> 8) & 0xFF;
+        txParser.encodeChar(ctmp);
+        ctmp = stmp & 0xFF;
+        txParser.encodeChar(ctmp);
+#else       
         dbgSerial.printString("Iin: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
         dbgSerial.printString("mA\r\n");
-        
+#endif
         //sprintf((char*)printBuffer, "Iin: 0x%X - %u\r\n", boardCurrent, boardCurrent);
         //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen((const char*)printBuffer));
         
@@ -292,14 +339,27 @@ int main (void)
         // Vout = temp * Tc + V0
         // temp = (Vout - V0) / Tc
         ftmp = (fvoltage - 0.5f) / 0.01f;
-        
+
+#if CTRL_FROM_DBG
+        stmp = ftmp * 100.0f; // As a special case, temperature is in 100th part increments
+        ctmp = (stmp >> 8) & 0xFF;
+        txParser.encodeChar(ctmp);
+        ctmp = stmp & 0xFF;
+        txParser.encodeChar(ctmp);
+#else     
         dbgSerial.printString("Temp: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
         dbgSerial.printString("degC\r\n\r\n");
-        
+#endif
         //sprintf(printBuffer, "Temp: 0x%X - %u - %.2fdegC\r\n\r\n", boardTemperature, boardTemperature, ftmp);
         //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
+        
+#if CTRL_FROM_DBG
+        // The parser returns the length at finalization
+        ctmp = txParser.finalizeMsg();
+        usart_serial_write_packet(USART_DBG_PORT, ctrlMsgTxBuffer, ctmp);
+#endif
         
 	}
 
