@@ -1,0 +1,14 @@
+*.lbr binary
+*.epf binary
+*.brd binary
+*.sch binary
+*.GBL binary
+*.GTL binary
+*.GTO binary
+*.GTS binary
+*.GBO binary
+*.GBS binary
+*.GTL binary
+*.GML binary
+*.TXT binary
+
