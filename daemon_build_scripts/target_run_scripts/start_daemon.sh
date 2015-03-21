@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-PROGNAME="RobotControlDaemon"
+PROGNAME="/home/pi/RCD/bin/RobotControlDaemon"
 
-/usr/local/bin/spawn-fcgi -p 8000 -P /var/run/fcgi.pid -- "$PROGNAME" -p /dev/ttyAMA0
+/usr/local/bin/spawn-fcgi -p 8000 -P /var/run/uherobotd.pid -- "$PROGNAME" -p /dev/ttyAMA0
 

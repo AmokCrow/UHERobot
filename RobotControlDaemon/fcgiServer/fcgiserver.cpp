@@ -59,6 +59,8 @@ void FcgiServer::run()
 {
     std::string query;
     std::string uri;
+    std::string method;
+
     const DExGeneralParam* clientReturnItems;
     unsigned int numReturnedItems;
 
@@ -66,6 +68,13 @@ void FcgiServer::run()
     {
         uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
         query = FCGX_GetParam("QUERY_STRING", requestM.envp);
+        method = FCGX_GetParam("METHOD", requestM.envp);
+
+        if(method == "POST")
+        {
+            // TODO: Fish the string out of the body
+        }
+
         std::cout << "Got request. URI: " << uri << "QUERY: " << query << std::endl;
         pClientM->serveCall(query, clientReturnItems, numReturnedItems);
         std::cout << "Served" << std::endl;
@@ -88,18 +97,6 @@ void FcgiServer::run()
                 }
             }
 
-            /*
-            while(!dynamics.empty())
-            {
-                FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
-                dynamics.pop_front();
-
-                if(!dynamics.empty())
-                {
-                    FCGX_FPrintF(requestM.out, ", ");
-                }
-            }
-            */
             FCGX_FPrintF(requestM.out, "}\r\n");
         }
         else // Serve as a normal HTML query
@@ -112,18 +109,7 @@ void FcgiServer::run()
                 std::cout << clientReturnItems[i].prefix << clientReturnItems[i].value << clientReturnItems[i].suffix << std::endl;
                 FCGX_FPrintF(requestM.out, "%s : %f %s <br>\r\n", clientReturnItems[i].prefix, clientReturnItems[i].value, clientReturnItems[i].suffix);
             }
-/*
-            while(!dynamics.empty())
-            {
-                FCGX_FPrintF(requestM.out, " \"%s : %s\" ", dynamics.front().name.c_str(), dynamics.front().value.c_str());
-                dynamics.pop_front();
 
-                if(!dynamics.empty())
-                {
-                    FCGX_FPrintF(requestM.out, ", <br>");
-                }
-            }
-            */
             FCGX_FPrintF(requestM.out, "</p>\r\n");
         }
         std::cout << "Finished" << std::endl;

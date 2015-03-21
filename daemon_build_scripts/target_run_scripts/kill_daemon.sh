@@ -1,9 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
-PROGNAME="RobotControlDaemon"
 
-if [ -f /var/run/fcgi.pid ]
+if [ -f /var/run/uherobotd.pid ]
 then
-  kill -9 `cat /var/run/fcgi.pid`
+  kill -9 `cat /var/run/uherobotd.pid`
 fi
 
