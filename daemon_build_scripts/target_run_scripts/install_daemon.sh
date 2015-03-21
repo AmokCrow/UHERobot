@@ -12,8 +12,8 @@ chmod a+rx kill_daemon.sh
 chmod a+rx board_service.sh
 
 # Link from init.d to the control script and add it to the startup list. The daemon should now start with the RasPi.
-ln -s board_service.sh /etc/init.d/uherobotd
-update-rc.d /etc/init.d/uherobotd defaults
+ln -s /home/pi/RCD/board_service.sh /etc/init.d/uherobotd
+update-rc.d uherobotd defaults
 
 
 
