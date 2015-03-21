@@ -56,7 +56,7 @@ MotorDriver motor1;
 MotorDriver motor2;
 PrintFunctions dbgSerial;
 
-#define CTRL_FROM_DBG 1
+//define CTRL_FROM_DBG 1
 
 enum CtrlMsg
 {
@@ -149,12 +149,17 @@ __attribute__((__interrupt__)) static void ctrl_uart_interrupt(void)
 {
     uint8_t tmpChar;
     
+#ifdef CTRL_FROM_DBG 
     if(usart_test_hit(USART_DBG_PORT))
     //while(usart_test_hit(USART_UPLINK_PORT))
     {
         tmpChar = 0xFF & usart_getchar(USART_DBG_PORT);
+#else
+    if(usart_test_hit(USART_UPLINK_PORT))
+    {
+        tmpChar = 0xFF & usart_getchar(USART_UPLINK_PORT);
         usart_putchar(USART_DBG_PORT, tmpChar);
-        //tmpChar = 0xFF & usart_getchar(USART_UPLINK_PORT);
+#endif
         tmpChar = msgParser.decodeChar(tmpChar);
         
         if(tmpChar != 0)
@@ -222,12 +227,14 @@ int main (void)
     msgParser.init(ctrlMsgRxBuffer, 100);
     txParser.init(ctrlMsgTxBuffer, 100);
     
+#ifdef CTRL_FROM_DBG  
     INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART2_IRQ, AVR32_INTC_INT1);
     AVR32_USART2.ier |= (1 << 0);
-    
-    //INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART3_IRQ, AVR32_INTC_INT1);
-    //AVR32_USART3.ier |= (1 << 0);
-    
+#else
+    INTC_register_interrupt(&ctrl_uart_interrupt, AVR32_USART3_IRQ, AVR32_INTC_INT1);
+    AVR32_USART3.ier |= (1 << 0);
+#endif
+
     gpio_enable_gpio_pin(MOTOR_CTRL_ENA_GPIO);
     gpio_configure_pin(MOTOR_CTRL_ENA_GPIO, (GPIO_DIR_OUTPUT | GPIO_INIT_HIGH));
     
@@ -287,7 +294,7 @@ int main (void)
         int16_t stmp;
         uint8_t ctmp;
         
-#if CTRL_FROM_DBG
+
         txParser.reset();
         txParser.encodeChar(8);
         txParser.encodeChar(1);
@@ -297,7 +304,8 @@ int main (void)
         txParser.encodeChar(ctmp);
         ctmp = stmp & 0xFF;
         txParser.encodeChar(ctmp);
-#else
+
+#ifndef CTRL_FROM_DBG  
         dbgSerial.printString("Vin: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
@@ -316,13 +324,14 @@ int main (void)
         ftmp = voltFromAdc(boardCurrent);
         ftmp *= 2750.0f;
         
-#if CTRL_FROM_DBG
+
         stmp = ftmp;
         ctmp = (stmp >> 8) & 0xFF;
         txParser.encodeChar(ctmp);
         ctmp = stmp & 0xFF;
         txParser.encodeChar(ctmp);
-#else       
+        
+#ifndef CTRL_FROM_DBG        
         dbgSerial.printString("Iin: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
@@ -340,13 +349,14 @@ int main (void)
         // temp = (Vout - V0) / Tc
         ftmp = (fvoltage - 0.5f) / 0.01f;
 
-#if CTRL_FROM_DBG
+
         stmp = ftmp * 100.0f; // As a special case, temperature is in 100th part increments
         ctmp = (stmp >> 8) & 0xFF;
         txParser.encodeChar(ctmp);
         ctmp = stmp & 0xFF;
         txParser.encodeChar(ctmp);
-#else     
+        
+#ifndef CTRL_FROM_DBG  
         dbgSerial.printString("Temp: ");
         dbgSerial.floatToStr(printBuffer, ftmp);
         dbgSerial.printUString(printBuffer);
@@ -355,10 +365,13 @@ int main (void)
         //sprintf(printBuffer, "Temp: 0x%X - %u - %.2fdegC\r\n\r\n", boardTemperature, boardTemperature, ftmp);
         //usart_serial_write_packet(USART_DBG_PORT, printBuffer, strlen(printBuffer));
         
-#if CTRL_FROM_DBG
         // The parser returns the length at finalization
         ctmp = txParser.finalizeMsg();
+
+#if CTRL_FROM_DBG
         usart_serial_write_packet(USART_DBG_PORT, ctrlMsgTxBuffer, ctmp);
+#else
+        usart_serial_write_packet(USART_UPLINK_PORT, ctrlMsgTxBuffer, ctmp);
 #endif
         
 	}
