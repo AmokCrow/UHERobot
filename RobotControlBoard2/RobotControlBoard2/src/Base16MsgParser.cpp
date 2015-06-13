@@ -174,6 +174,7 @@ void Base16MsgParser::encodeChar(uint8_t ch)
 
 void Base16MsgParser::encodeBuffer(uint8_t* buffer, uint8_t length)
 {
+    mNumBytesInBuffer = 0;
     for(uint16_t i = 0; i < length; i++)
     {
         encodeChar(buffer[i]);

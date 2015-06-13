@@ -21,7 +21,6 @@ public:
     uint8_t decodeBuffer(uint8_t* buf, uint8_t bufLen, uint8_t* numParsed);
     uint8_t numBytesStillExpected();
     
-    void encodeChar(uint8_t ch);
     void encodeBuffer(uint8_t* buffer, uint8_t length);
     uint8_t finalizeMsg();
     
@@ -29,6 +28,8 @@ public:
     
 protected:
 private:
+    void encodeChar(uint8_t ch);
+    
     // The location and length of the external working buffer
     uint8_t* mpBuffer;
     uint8_t mBuffLength;
