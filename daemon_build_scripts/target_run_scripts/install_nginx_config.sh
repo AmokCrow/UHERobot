@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 USER="pi"
 
-cp -f "/home/${USER}/RCD/nginx_config" /etc/nginx/nginx.conf
+cp -f nginx_config /etc/nginx/nginx.conf
 
 nginx -s reload
 
