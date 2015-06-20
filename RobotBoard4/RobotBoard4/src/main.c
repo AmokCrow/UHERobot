@@ -244,26 +244,23 @@ ISR(USARTE0_RXC_vect)
             
             // TODO: Set servo positions.
         }
+        else if((cmdBuff.cmdParams[0] == 3) && (cmdBuff.cmdParamsLength == 5))
+        {
+            m0speed = (cmdBuff.cmdParams[1] << 8) | cmdBuff.cmdParams[2];
+            m1speed = (cmdBuff.cmdParams[3] << 8) | cmdBuff.cmdParams[4];
+            spdChange = 1;
+            
+            motor_set_speed(m0speed, 0);
+            motor_set_speed(m1speed, 1);
+        }
     }        
 }    
 
 uint8_t rawBuffer[20];
 uint8_t txBuffer[40];
 
-int main (void)
+void configure_uarts(void)
 {
-    uint16_t txLength;
-    uint8_t i;
-    
-	// Insert system clock initialization code here (sysclk_init()).
-    init_avr_asf_libraries();
-
-    configure_motor_clock();
-    
-    enable_motor_pins();
-    
-    start_motor_clock();
-    
     usart_serial_options_t uOpts;
     
     uOpts.baudrate = 9600;
@@ -288,12 +285,121 @@ int main (void)
     usart_serial_init(&USARTE0, &uOpts);
     usart_set_rx_interrupt_level(&USARTE0, USART_INT_LVL_LO);
     
+}
+
+typedef struct  
+{
+    uint8_t mux;
+    uint8_t ctrl;
+    uint8_t isSigned;
+}
+AdcLocation_t;
+
+void adc_startOnSetting(const AdcLocation_t* loc)
+{
+    irqflags_t flags;
+
+    flags = cpu_irq_save();
+
+    ADCA.CH0.CTRL = loc->ctrl;
+    ADCA.CH0.MUXCTRL = loc->mux;
+    
+    if(loc->isSigned)
+    {
+        ADCA.CTRLB |= 0x10;
+    }
+    else
+    {
+        ADCA.CTRLB &= ~0x10;
+    }
+
+    cpu_irq_restore(flags);
+    
+    adc_start_conversion(&ADCA, ADC_CH0);
+}
+
+void adc_init(void)
+{
+    struct adc_config adc_conf;
+    struct adc_channel_config adcch_conf;
+    adc_read_configuration(&ADCA, &adc_conf);
+    adc_set_conversion_parameters(&adc_conf, ADC_SIGN_ON, ADC_RES_12,
+    ADC_REF_VCC);
+    adc_set_conversion_trigger(&adc_conf, ADC_TRIG_MANUAL, 1, 0);
+    adc_set_clock_rate(&adc_conf, 62000UL);
+    adc_write_configuration(&ADCA, &adc_conf);
+    
+    adcch_read_configuration(&ADCA, ADC_CH0, &adcch_conf);
+    adcch_set_input(&adcch_conf, ADCCH_POS_PIN0, ADCCH_NEG_NONE, 1);
+    adcch_write_configuration(&ADCA, ADC_CH0, &adcch_conf);
+}
+
+const AdcLocation_t adcLoc_IntTempSensor = { ADC_CH_MUXINT_TEMP_gc, ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc, 0 };
+const AdcLocation_t adcLoc_CpuCurrent = { ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
+const AdcLocation_t adcLoc_CpuVoltage = { ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
+const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
+
+int main (void)
+{
+    uint16_t txLength;
+    uint8_t i;
+    uint16_t adcResult;
+    
+	// Insert system clock initialization code here (sysclk_init()).
+    init_avr_asf_libraries();
+
+    configure_motor_clock();
+    
+    enable_motor_pins();
+    
+    start_motor_clock();
+    
+    configure_uarts();
+    
     // TODO: Set pull-up on RX-pins.
+    
+    
+    
+    adc_init();
+    
+    adc_enable(&ADCA);
     
     cpu_irq_enable(); // A new name for sei()
 
+
 	while(1)
     {
+        adc_startOnSetting(&adcLoc_IntTempSensor);
+        adc_wait_for_interrupt_flag(&ADCA, ADC_CH0);
+        adcResult = adc_get_result(&ADCA, ADC_CH0);
+        rawBuffer[0] = adcResult >> 8;
+        rawBuffer[1] = adcResult & 0xFF;
+        
+        adc_startOnSetting(&adcLoc_CpuCurrent);
+        adc_wait_for_interrupt_flag(&ADCA, ADC_CH0);
+        adcResult = adc_get_result(&ADCA, ADC_CH0);
+        rawBuffer[2] = adcResult >> 8;
+        rawBuffer[3] = adcResult & 0xFF;
+        
+        adc_startOnSetting(&adcLoc_CpuVoltage);
+        adc_wait_for_interrupt_flag(&ADCA, ADC_CH0);
+        adcResult = adc_get_result(&ADCA, ADC_CH0);
+        rawBuffer[4] = adcResult >> 8;
+        rawBuffer[5] = adcResult & 0xFF;
+        
+        adc_startOnSetting(&adcLoc_MotorCurrent);
+        adc_wait_for_interrupt_flag(&ADCA, ADC_CH0);
+        adcResult = adc_get_result(&ADCA, ADC_CH0);
+        rawBuffer[6] = adcResult >> 8;
+        rawBuffer[7] = adcResult & 0xFF;
+        
+        txLength = interpreterFormMessage(txBuffer, rawBuffer, 8);
+        
+        for(i = 0; i < txLength; i++)
+        {
+            usart_serial_putchar(&USARTE0, txBuffer[i]);
+        }
+        
         usart_serial_putchar(&USARTD0, 'A');
         if(spdChange)
         {
