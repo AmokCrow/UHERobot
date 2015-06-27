@@ -41,7 +41,7 @@ public:
   // The return value is a linked list of status values for printing.
   static void notificationCallback(void* obj, Base16Message* msg) { ((ControlLogic*)obj)->msgRxNotification(msg); }
 
-  virtual void serveCall(const std::string& query, const DExGeneralParam *&retResponseStatics, unsigned int &retNumItems);
+  virtual void serveCall(const std::string& query, const std::string& uri, const char* &response, eResponseType &respType);
   
 private:
 

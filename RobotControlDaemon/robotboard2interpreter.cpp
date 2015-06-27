@@ -5,41 +5,17 @@
 #include <iostream>
 #include <cstdio>
 
-const char RobotBoard2Interpreter::mStrBattCap[] = "Battery Capacity";
-const char RobotBoard2Interpreter::mStrPercent[] = "%";
-const char RobotBoard2Interpreter::mStrBattVolt[] = "Battery Voltage";
-const char RobotBoard2Interpreter::mStrVolt[] = "V";
-const char RobotBoard2Interpreter::mStrCurrent[] = "I";
-const char RobotBoard2Interpreter::mStrBrdTemp[] = "Board temperature";
-const char RobotBoard2Interpreter::mStrTemp[] = "C";
-const char RobotBoard2Interpreter::mStrBrdCurr[] = "Board current";
-const char RobotBoard2Interpreter::mStrJsonBattVolt[] = "bv";
-const char RobotBoard2Interpreter::mStrJsonBrdCurr[] = "bc";
-const char RobotBoard2Interpreter::mStrJsonBrdTemp[] = "bt";
-const char RobotBoard2Interpreter::mStrJsonBattStat[] = "bs";
 
 RobotBoard2Interpreter::RobotBoard2Interpreter()
+    : mpPlaintext()
+    , mpHtml()
+    , mpJson()
+    , mTemperature(0.0f)
+    , mCpuCurrent(0.0f)
+    , mCpuVoltage(0.0f)
+    , mMotorCurrent(0.0f)
+    , mMotorVoltage(0.0f)
 {
-    printableParams[BattVoltage].prefix = mStrBattVolt;
-    printableParams[BattVoltage].suffix = mStrVolt;
-    printableParams[BattVoltage].value = 0.0f;
-    printableParams[BattVoltage].apiMarker = mStrJsonBattVolt;
-
-    printableParams[BatteryCurrent].prefix = mStrBrdCurr;
-    printableParams[BatteryCurrent].suffix = mStrCurrent;
-    printableParams[BatteryCurrent].value = 0.0f;
-    printableParams[BatteryCurrent].apiMarker = mStrJsonBrdCurr;
-
-    printableParams[Temperature].prefix = mStrBrdTemp;
-    printableParams[Temperature].suffix = mStrTemp;
-    printableParams[Temperature].value = 0.0f;
-    printableParams[Temperature].apiMarker = mStrJsonBrdTemp;
-
-    printableParams[BatteryStatus].prefix = mStrBattCap;
-    printableParams[BatteryStatus].suffix = mStrPercent;
-    printableParams[BatteryStatus].value = 0.0f;
-    printableParams[BatteryStatus].apiMarker = mStrJsonBattStat;
-
     mTxBuff[0] = 23;
     mTxBuff[1] = 0;
 
@@ -47,6 +23,10 @@ RobotBoard2Interpreter::RobotBoard2Interpreter()
     {
         mTxBuff[i] = 0;
     }
+
+    producePlaintext();
+    produceHtml();
+    produceJson();
 
     pthread_mutex_init(&mMutex, NULL);
 }
@@ -66,31 +46,106 @@ void RobotBoard2Interpreter::getSettingPacket(uint8_t* outPacketLoc, unsigned in
 
 void RobotBoard2Interpreter::setParamsSerial(const uint8_t *buff, uint16_t buffLength)
 {
+    /*
     if(!((buffLength == 8) && (buff[1] == 1) && (buff[0] == 8)))
     {
         std::cout << "Bad msg: len " << (unsigned int)buffLength << " - reported " << (unsigned int)buff[0] << ", type " << (unsigned int)buff[1] << std::endl;
         return;
     }
+    */
 
-    float ftmp;
-    unsigned int itmp;
+    extractValues(buff, buffLength);
+    producePlaintext();
+    produceHtml();
+    produceJson();
+}
 
-    itmp = (buff[2] << 8) | buff[3];
-    ftmp = itmp;
-    ftmp /= 100.0f;
-    printableParams[BattVoltage].value = ftmp;
-    // Battery voltage area is approximately 12.6V - 8V.
-    // This is a bad estimation, but shall suffice for now.
-    printableParams[BatteryStatus].value = ((ftmp - 8.0f) / (12.6f - 8.0f)) * 100.0f;
+void RobotBoard2Interpreter::extractValues(const uint8_t* buffer, uint16_t length)
+{
+    uint16_t tmp = buffer[0] << 8;
+    float voltage;
+    tmp |= buffer[1];
 
-    itmp = (buff[4] << 8) | buff[5];
-    ftmp = itmp;
-    printableParams[BatteryCurrent].value = ftmp;
+    // The ADC has a 12bit result. But for signed measurements, one bit is the sign.
+    // The reference is 3.3V / 1.6
+    // 2**12 == 4096, 2**11 == 2048
 
-    itmp = (buff[6] << 8) | buff[7];
-    ftmp = itmp;
-    ftmp /= 100.0f;
-    printableParams[Temperature].value = ftmp;
+    // Temperature is an internal mesurement, unsigned, no gain.
+    // TODO: find out the temperature/voltage coefficient and zero-point. They're individual for processors.
+    mTemperature = (tmp * 1.0f) / 4096.0f * (3.3f / 1.6f);
+
+    tmp = buffer[2] << 8;
+    tmp |= buffer[3];
+
+    // The full scale of the current sensors is +/-12A. Zero point is Vcc/2.
+    // The input has 0.5x gain. Mode is signed (although the result here is not,
+    //  as reference is GND), so full-scale is 2**11.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    // Deduct 2**11 / 2 == 1024 to make result signed and
+    mCpuCurrent = ((voltage / 3.3f) - 0.5f) * 2.0f * 12.0f;
+
+    tmp = buffer[4] << 8;
+    tmp |= buffer[5];
+
+    // Differential, but with no gain, as input is 1/11 of the battery voltage.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
+    mCpuVoltage = voltage * 11.0f;
+
+    tmp = buffer[6] << 8;
+    tmp |= buffer[7];
+
+    // Same sensor tupe as CPU current, above.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    mMotorCurrent = ((voltage / 3.3f) - 0.5f) * 2.0f * 12.0f;
+}
+
+void RobotBoard2Interpreter::producePlaintext()
+{
+    if(mpPlaintext == bufferPlaintext1)
+    {
+        mpTmp = bufferPlaintext2;
+    }
+    else
+    {
+        mpTmp = bufferPlaintext1;
+    }
+
+    std::sprintf(mpTmp, "Temperature sensor: %f V \r\n", mTemperature);
+
+    mpPlaintext = mpTmp;
+}
+
+void RobotBoard2Interpreter::produceHtml()
+{
+    if(mpHtml == bufferHtml1)
+    {
+        mpTmp = bufferHtml2;
+    }
+    else
+    {
+        mpTmp = bufferHtml1;
+    }
+
+    std::sprintf(mpTmp, "<p>Temperature sensor: %fV<br> CPU Battery: %fV <br> CPU Current: %fA<br>Motor Voltage: N/A<br>Motor Current: %fA </p>",
+                 mTemperature, mCpuVoltage, mCpuCurrent, mMotorCurrent);
+
+    mpHtml = mpTmp;
+}
+
+void RobotBoard2Interpreter::produceJson()
+{
+    if(mpJson == bufferJson1)
+    {
+        mpTmp = bufferJson2;
+    }
+    else
+    {
+        mpTmp = bufferJson1;
+    }
+
+    std::sprintf(mpTmp, "{ \"temp\" : \"%f\" ", mTemperature);
+
+    mpJson = mpTmp;
 }
 
 void RobotBoard2Interpreter::enterProtected()
@@ -101,6 +156,21 @@ void RobotBoard2Interpreter::enterProtected()
 void RobotBoard2Interpreter::exitProtected()
 {
     pthread_mutex_unlock(&mMutex);
+}
+
+const char* RobotBoard2Interpreter::getJson()
+{
+    return (const char*)mpJson;
+}
+
+const char* RobotBoard2Interpreter::getHtml()
+{
+    return (const char*)mpHtml;
+}
+
+const char *RobotBoard2Interpreter::getPlaintext()
+{
+    return (const char*)mpPlaintext;
 }
 
 void RobotBoard2Interpreter::setLed(unsigned int ledNum, bool on)

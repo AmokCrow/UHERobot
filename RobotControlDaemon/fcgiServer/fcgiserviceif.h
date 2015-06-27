@@ -13,8 +13,15 @@ class FcgiServiceIf
 {
 public:
 
+    enum eResponseType
+    {
+        HtmlResponse,
+        JsonResponse,
+        TextResponse
+    };
+
     virtual ~FcgiServiceIf() { }
-    virtual void serveCall(const std::string& query, const DExGeneralParam* &retResponseStatics, unsigned int& retNumItems) = 0;
+    virtual void serveCall(const std::string& query, const std::string& uri, const char* &response, eResponseType &respType) = 0;
 
 };
 

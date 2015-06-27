@@ -95,7 +95,7 @@ Base16Message::eMsgStates Base16Message::feedRawMsgByte(char rawByte)
     }
 
     // End of message. Try to decode it.
-    if(rawByte == 'e')
+    if(rawByte == '\n')
     {
         putByteToRawBuff(rawByte);
 
@@ -118,15 +118,9 @@ Base16Message::eMsgStates Base16Message::feedRawMsgByte(char rawByte)
         return CONTINUE;
     }
     // Allow endline characters between messages
-    else if((rawByte == '\r') || (rawByte == '\n'))
+    else if(rawByte == '\r')
     {
-        if(mNumBytesEncoded == 0)
-        {
-            return CONTINUE;
-        }
-        classyError("Bad character in message");
-        clear();
-        return MSG_ERR;
+        return CONTINUE;
     }
     else if(((rawByte >= '0') && (rawByte <= '9')) || ((rawByte >= 'A') && (rawByte <= 'F')))
     {
@@ -195,7 +189,7 @@ bool Base16Message::encode()
         mNumBytesEncoded += 2;
     }
 
-    mEncodedBuff[mNumBytesEncoded] = 'e';
+    mEncodedBuff[mNumBytesEncoded] = '\n';
     mEncodedBuff[mNumBytesEncoded + 1] = 0;
 
     mNumBytesEncoded++;

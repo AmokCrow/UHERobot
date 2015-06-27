@@ -61,57 +61,82 @@ void FcgiServer::run()
     std::string uri;
     std::string method;
 
-    const DExGeneralParam* clientReturnItems;
-    unsigned int numReturnedItems;
+    int tmp;
+
+    const char* response;
+    const char* cpTmp;
+    FcgiServiceIf::eResponseType respType;
 
     while(FCGX_Accept_r(&requestM) >= 0)
     {
-        uri = FCGX_GetParam("REQUEST_URI", requestM.envp);
-        query = FCGX_GetParam("QUERY_STRING", requestM.envp);
-        method = FCGX_GetParam("METHOD", requestM.envp);
+
+        cpTmp = FCGX_GetParam("REQUEST_URI", requestM.envp);
+        if(cpTmp != NULL)
+        {
+            uri = cpTmp;
+        }
+        else
+        {
+            uri.clear();
+        }
+
+        cpTmp = FCGX_GetParam("QUERY_STRING", requestM.envp);
+        if(cpTmp != NULL)
+        {
+            query = cpTmp;
+        }
+        else
+        {
+            query.clear();
+        }
+
+        cpTmp = FCGX_GetParam("METHOD", requestM.envp);
+        if(cpTmp != NULL)
+        {
+            method = cpTmp;
+        }
+        else
+        {
+            method.clear();
+        }
 
         if(method == "POST")
         {
-            // TODO: Fish the string out of the body
+            tmp = FCGX_GetStr(mPostInputBuffer, cmPostInputBufferSize - 1, requestM.in);
+            mPostInputBuffer[tmp] = 0;
+            query.append(mPostInputBuffer);
         }
 
-        std::cout << "Got request. URI: " << uri << "QUERY: " << query << std::endl;
-        pClientM->serveCall(query, clientReturnItems, numReturnedItems);
-        std::cout << "Served" << std::endl;
+        std::cout << "Got request. URI: " << uri << " QUERY: " << query << " METHOD: " << method << std::endl;
+
         if(std::string::npos != uri.find("api"))
         {
             // Serve with JSON
             FCGX_FPrintF(requestM.out, "Content-type: application/json\r\n\r\n");
 
-            FCGX_FPrintF(requestM.out, "{");
-            for(unsigned int i = 0; i < numReturnedItems; i++)
-            {
-                std::cout << clientReturnItems[i].apiMarker << std::endl;
-                if(i == (numReturnedItems - 1))
-                {
-                    FCGX_FPrintF(requestM.out, " \"%s\" : \"%f\" ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
-                }
-                else
-                {
-                    FCGX_FPrintF(requestM.out, " \"%s\" : \"%f\", ", clientReturnItems[i].apiMarker, clientReturnItems[i].value);
-                }
-            }
+            pClientM->serveCall(query, std::string("api"), response, respType);
+            std::cout << "Served" << std::endl;
 
-            FCGX_FPrintF(requestM.out, "}\r\n");
+            FCGX_PutS(response, requestM.out);
+
+            FCGX_FPrintF(requestM.out, "\r\n");
         }
         else // Serve as a normal HTML query
         {
             FCGX_FPrintF(requestM.out, "Content-type: text/html\r\n\r\n");
 
             FCGX_FPrintF(requestM.out, "<h1>Server says</h1>\r\n<p>\r\n");
-            for(unsigned int i = 0; i < numReturnedItems; i++)
-            {
-                std::cout << clientReturnItems[i].prefix << clientReturnItems[i].value << clientReturnItems[i].suffix << std::endl;
-                FCGX_FPrintF(requestM.out, "%s : %f %s <br>\r\n", clientReturnItems[i].prefix, clientReturnItems[i].value, clientReturnItems[i].suffix);
-            }
 
-            FCGX_FPrintF(requestM.out, "</p>\r\n");
+
+            pClientM->serveCall(query, std::string("Web"), response, respType);
+            std::cout << "Served" << std::endl;
+
+            FCGX_PutS(response, requestM.out);
+
+            FCGX_FPrintF(requestM.out, "<p>Finished</p>\r\n");
+
         }
+
         std::cout << "Finished" << std::endl;
         FCGX_Finish_r(&requestM);
 

@@ -98,11 +98,21 @@ void ControlLogic::msgRxNotification(Base16Message* msg)
     mInterpreter.setParamsSerial((const uint8_t*)pBytes, length);
 }
 
-void ControlLogic::serveCall(const std::string& query, const DExGeneralParam* &retResponseStatics, unsigned int& retNumItems)
+void ControlLogic::serveCall(const std::string& query, const std::string &uri, const char *&response, eResponseType &respType)
 {
-    retResponseStatics = mInterpreter.getPrintables();
-    retNumItems = mInterpreter.getNumPrintables();
+    // Give a response
+    if(uri == "api")
+    {
+        respType = FcgiServiceIf::JsonResponse;
+        response = mInterpreter.getJson();
+    }
+    else
+    {
+        respType = FcgiServiceIf::HtmlResponse;
+        response = mInterpreter.getHtml();
+    }
 
+    // Parse the query
     int fieldValue;
     std::string fieldName;
     std::string valueAsString;

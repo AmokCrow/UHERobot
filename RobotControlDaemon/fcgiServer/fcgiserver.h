@@ -30,6 +30,9 @@ private:
 
     pthread_t threadM;
     FCGX_Request requestM;
+
+    static const unsigned int cmPostInputBufferSize = 1024;
+    char mPostInputBuffer[cmPostInputBufferSize];
 };
 
 }

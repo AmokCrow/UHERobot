@@ -2,10 +2,9 @@
 #define ROBOTBOARD2INTERPRETER_H
 
 
-#include "DataExchangeStructures.h"
-
 #include <stdint.h>
 #include <pthread.h>
+#include <memory>
 
 class RobotBoard2Interpreter
 {
@@ -14,10 +13,11 @@ public:
 
     // Values from sensors
     void setParamsSerial(const uint8_t* buff, uint16_t buffLength);
-    float getBattVoltage() { return printableParams[BattVoltage].value; }
-    float getBattStatus() { return printableParams[BatteryStatus].value; }
-    float getBattCurrent() { return printableParams[BatteryCurrent].value; }
-    float getBoardTemperature() { return printableParams[Temperature].value; }
+    float getCpuVoltage() { return mCpuVoltage; }
+    float getCpuCurrent() { return mCpuCurrent; }
+    float getMotorCurrent() { return mMotorCurrent; }
+    float getMotorVoltage() { return mMotorVoltage; }
+    float getIntTemperature() { return mTemperature; }
 
 
     // Values to be sent to the robot
@@ -29,27 +29,19 @@ public:
     void setLed(unsigned int ledNum, bool on);
     void getSettingPacket(uint8_t* outPacketLoc, unsigned int &outPacketLength);
 
-    // For serving web requests
-    const JsWebUtils::DExGeneralParam* getPrintables() { return (const JsWebUtils::DExGeneralParam*) printableParams; }
-    unsigned int getNumPrintables() { return NumParams; }
+    const char* getJson();
+    const char* getHtml();
+    const char* getPlaintext();
 
 private:
 
     void enterProtected();
     void exitProtected();
 
-    static const char mStrBattCap[];
-    static const char mStrPercent[];
-    static const char mStrBattVolt[];
-    static const char mStrVolt[];
-    static const char mStrCurrent[];
-    static const char mStrBrdTemp[];
-    static const char mStrTemp[];
-    static const char mStrBrdCurr[];
-    static const char mStrJsonBattVolt[];
-    static const char mStrJsonBrdCurr[];
-    static const char mStrJsonBrdTemp[];
-    static const char mStrJsonBattStat[];
+    void extractValues(const uint8_t* buffer, uint16_t length);
+    void producePlaintext();
+    void produceHtml();
+    void produceJson();
 
     enum eParams
     {
@@ -76,11 +68,38 @@ private:
     static const unsigned int TX_BUFF_SIZE = 25;
     static const unsigned int TX_CONTENT_SIZE = 23;
 
-    JsWebUtils::DExGeneralParam printableParams[NumParams];
     uint8_t mTxBuff[TX_BUFF_SIZE];
 
     pthread_mutex_t mMutex;
 
+    struct textBuffer
+    {
+
+    };
+
+    char bufferPlaintext1[100];
+    char bufferPlaintext2[100];
+
+    char bufferHtml1[100];
+    char bufferHtml2[100];
+
+    char bufferJson1[100];
+    char bufferJson2[100];
+
+    volatile const char* mpHtml;
+    volatile const char* mpJson;
+    volatile const char* mpPlaintext;
+
+    char* mpTmp;
+
+    // temp, cpu_curr, cpu_volt, mot_curr
+    float mTemperature;
+    float mCpuCurrent;
+    float mCpuVoltage;
+    float mMotorCurrent;
+    float mMotorVoltage;
+
+    char mIntBuff[100];
 };
 
 #endif // ROBOTBOARD2INTERPRETER_H

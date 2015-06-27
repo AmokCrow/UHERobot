@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 cd ../RobotControlDaemon
 /home/crow/RasPiCC/qt5pi/bin/qmake RobotControlDaemon.pro
