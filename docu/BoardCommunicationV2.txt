@@ -40,7 +40,7 @@ Message content is specific to the devices conversing. The following are defined
 4.1 Daemon to Board:
 Length: 2 + 21 = 23 (2*2 motors + 8*2 servos + 1 leds)
 Type: 0
-Data: Leds(1 Byte, bitfield) | Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, unsigned) | ... | Servo 8 (2 Bytes, unsigned)
+Data: Motor 1 (2 Bytes, signed) | Motor 2 (2 Bytes, signed) | Servo 1 (2 Bytes, unsigned) | ... | Servo 8 (2 Bytes, unsigned) | Leds(1 Byte, bitfield)
 
 4.2 Daemon to Board:
 Length: 2 + 8 = 10 (2*2 motors + 2*2 servos)

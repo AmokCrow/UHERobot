@@ -95,7 +95,9 @@ void RobotBoard2Interpreter::extractValues(const uint8_t* buffer, uint16_t lengt
     tmp |= buffer[7];
 
     // Same sensor tupe as CPU current, above.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    //voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    // Due to pin mapping, has to actually be measured without gain for now.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
     mMotorCurrent = ((voltage / 3.3f) - 0.5f) * 2.0f * 12.0f;
 }
 
@@ -143,7 +145,8 @@ void RobotBoard2Interpreter::produceJson()
         mpTmp = bufferJson1;
     }
 
-    std::sprintf(mpTmp, "{ \"temp\" : \"%f\" ", mTemperature);
+    std::sprintf(mpTmp, "{ \"temp\": %.1f, \"mv\": %.1f, \"mc\": %.1f, \"cv\": %.1f, \"cc\": %.1f }",
+                 mTemperature, 0.0f, mMotorCurrent, mCpuVoltage, mCpuCurrent );
 
     mpJson = mpTmp;
 }
@@ -182,38 +185,54 @@ void RobotBoard2Interpreter::setLed(unsigned int ledNum, bool on)
 
     if(on)
     {
-        mTxBuff[MsgLengthLen + MsgTypeLen] |= (1 << ledNum);
+        mTxBuff[MsgLengthLen + MsgTypeLen + MotorsTotalLen + ServosTotalLen] |= (1 << ledNum);
     }
     else
     {
-        mTxBuff[MsgLengthLen + MsgTypeLen] &= ~(1 << ledNum);
+        mTxBuff[MsgLengthLen + MsgTypeLen + MotorsTotalLen + ServosTotalLen] &= ~(1 << ledNum);
     }
 }
 
 void RobotBoard2Interpreter::setRightMotor(int percent)
 {
-    int32_t tmp = percent;
-    tmp *= 32767;
-    tmp /= 100;
+    if(percent > 100)
+    {
+        percent = 100;
+    }
+    else if(percent < -100)
+    {
+        percent = -100;
+    }
+
+    int16_t tmp = percent;
+    tmp *= 32;
 
     enterProtected();
 
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen] = (tmp >> 8) & 0xFF;
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen + 1] = tmp & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen] = (tmp >> 8) & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen + 1] = tmp & 0xFF;
 
     exitProtected();
 }
 
 void RobotBoard2Interpreter::setLeftMotor(int percent)
 {
-    int32_t tmp = percent;
-    tmp *= 32767;
-    tmp /= 100;
+    if(percent > 100)
+    {
+        percent = 100;
+    }
+    else if(percent < -100)
+    {
+        percent = -100;
+    }
+
+    int16_t tmp = percent;
+    tmp *= 32;
 
     enterProtected();
 
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen + MotorLen] = (tmp >> 8) & 0xFF;
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen + MotorLen + 1] = tmp & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen + MotorLen] = (tmp >> 8) & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen + MotorLen + 1] = tmp & 0xFF;
 
     exitProtected();
 }
@@ -227,8 +246,8 @@ void RobotBoard2Interpreter::setServoPos(unsigned int servoNum, uint16_t pos)
 
     enterProtected();
 
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen + (2 * MotorLen) + (servoNum * ServoLen)] = (pos >> 8) & 0xFF;
-    mTxBuff[MsgLengthLen + MsgTypeLen + LedsLen + (2 * MotorLen) + (servoNum * ServoLen) + 1] = pos & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen + (2 * MotorLen) + (servoNum * ServoLen)] = (pos >> 8) & 0xFF;
+    mTxBuff[MsgLengthLen + MsgTypeLen + (2 * MotorLen) + (servoNum * ServoLen) + 1] = pos & 0xFF;
 
     exitProtected();
 }

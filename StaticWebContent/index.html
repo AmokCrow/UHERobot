@@ -1,12 +1,118 @@
 <!DOCTYPE html>
 <html>
+<head>
+
+</head>
 <body>
+<script src="jquery.js"></script>
+<h1>Basic Controls</h1>
 
-<h1>My First Heading</h1>
+<table>
+    <tr>
+        <td><button id="button_front_left" type="button">Front left</button></td>
+        <td><button id="button_forward" type="button">Forward</button></td>
+        <td><button id="button_front_right" type="button">Front right</button></td>
+    </tr>
+    <tr>
+        <td><button id="button_turn_left" type="button">Turn left</button></td>
+        <td><button id="button_stop" type="button">Stop</button></td>
+        <td><button id="button_turn_right" type="button">Turn right</button></td>
+    </tr>
+    <tr>
+        <td><button id="button_back_left" type="button">Back left</button></td>
+        <td><button id="button_back" type="button">Back</button></td>
+        <td><button id="button_back_right" type="button">Back right</button></td>
+    </tr>
+</table>
 
-<a href="/web/">FastCGI side</a>
+<table>
+    <tr>
+    <td>Motor current:</td><td id="motor_current">0 A</td>
+    </tr>
+    <tr>
+    <td>Motor voltage:</td><td id="motor_current">N/A</td>
+    </tr>
+    <tr>
+    <td>Main battery current:</td><td id="main_current">0 A</td>
+    </tr>
+    <tr>
+    <td>Main battery voltage:</td><td id="main_voltage">0 V</td>
+    </tr>
+    <tr>
+    <td>MCU temperature probe:</td><td id="mcu_temp">0 V</td>
+    </tr>
+</table>
 
-<p>My first paragraph.</p>
+
+<script>
+    var left_motor_speed = 0;
+    var right_motor_speed = 0;
+    
+
+    $( document ).ready(function() {
+        // Implement button click functionality.
+        $( "#button_front_left" ).click(function( event ) {
+            left_motor_speed = 50;
+            right_motor_speed = 100;
+            event.preventDefault();
+        });
+        $( "#button_forward" ).click(function( event ) {
+            left_motor_speed = 100;
+            right_motor_speed = 100;
+            event.preventDefault();
+        });
+        $( "#button_front_right" ).click(function( event ) {
+            left_motor_speed = 100;
+            right_motor_speed = 50;
+            event.preventDefault();
+        });
+        $( "#button_turn_left" ).click(function( event ) {
+            left_motor_speed = -50;
+            right_motor_speed = 50;
+            event.preventDefault();
+        });
+        $( "#button_stop" ).click(function( event ) {
+            left_motor_speed = 0;
+            right_motor_speed = 0;
+            event.preventDefault();
+        });
+        $( "#button_turn_right" ).click(function( event ) {
+            left_motor_speed = 50;
+            right_motor_speed = -50;
+            event.preventDefault();
+        });
+        $( "#button_back_left" ).click(function( event ) {
+            left_motor_speed = -40;
+            right_motor_speed = -80;
+            event.preventDefault();
+        });
+        $( "#button_back" ).click(function( event ) {
+            left_motor_speed = -80;
+            right_motor_speed = -80;
+            event.preventDefault();
+        });
+        $( "#button_back_right" ).click(function( event ) {
+            left_motor_speed = -80;
+            right_motor_speed = -40;
+            event.preventDefault();
+        });
+    });
+    
+    function command_responded(data)
+    {
+        $("#motor_current").text( data.mc + " A");
+        $("#main_current").text( data.cc + " A");
+        $("#main_voltage").text( data.cv + " V");
+        $("#mcu_temp").text( data.temp + " V");
+    }
+    
+    function send_command_parameters()
+    {
+        $.getJSON("api/", { motorR: right_motor_speed, motorL: left_motor_speed }, command_responded);
+    }
+    
+    setInterval(send_command_parameters, 1000);
+</script>
 
 </body>
 </html> 

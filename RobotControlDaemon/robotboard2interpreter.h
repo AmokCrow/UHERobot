@@ -62,7 +62,9 @@ private:
         MsgTypeLen = 1,
         LedsLen = 1,
         MotorLen = 2,
-        ServoLen = 2
+        ServoLen = 2,
+        MotorsTotalLen = MotorLen * 2,
+        ServosTotalLen = ServoLen * 2
     };
 
     static const unsigned int TX_BUFF_SIZE = 25;

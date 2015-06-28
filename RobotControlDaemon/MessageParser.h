@@ -2,9 +2,10 @@
 #ifndef MESSAGE_PARSER__H
 #define MESSAGE_PARSER__H
 
-// A clas for communication with an external system via BASE16 coded messages.
+// A class for communication with an external system via BASE16 coded messages.
 // (c) Johannes Sulkakoski, 2014 . Released under GPLv2.
-// Some parts copied from Stack Exchange, but I'm not going to point all of them out due to sheel laziness.
+// Some parts copied rather verbatim from Stack Exchange (mostly about serial port handling),
+//  but I'm not going to dissect it further due to sheer laziness, so just give them some of the credit.
 
 
 #include <stdio.h>      // standard input / output functions

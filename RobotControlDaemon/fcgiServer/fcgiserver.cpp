@@ -90,7 +90,7 @@ void FcgiServer::run()
             query.clear();
         }
 
-        cpTmp = FCGX_GetParam("METHOD", requestM.envp);
+        cpTmp = FCGX_GetParam("REQUEST_METHOD", requestM.envp);
         if(cpTmp != NULL)
         {
             method = cpTmp;
@@ -118,6 +118,7 @@ void FcgiServer::run()
             std::cout << "Served" << std::endl;
 
             FCGX_PutS(response, requestM.out);
+            //std::cout << response << std::endl;
 
             FCGX_FPrintF(requestM.out, "\r\n");
         }
