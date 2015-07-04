@@ -48,52 +48,73 @@
     var left_motor_speed = 0;
     var right_motor_speed = 0;
     
+    var command_sent = 0;
+
+    function send_command_parameters()
+    {
+        $.getJSON("api/", { motorR: right_motor_speed, motorL: left_motor_speed }, command_responded);
+    }
+    
+    function send_command_from_button()
+    {
+        command_sent = 1;
+        send_command_parameters();
+    }
 
     $( document ).ready(function() {
         // Implement button click functionality.
         $( "#button_front_left" ).click(function( event ) {
             left_motor_speed = 50;
             right_motor_speed = 100;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_forward" ).click(function( event ) {
             left_motor_speed = 100;
             right_motor_speed = 100;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_front_right" ).click(function( event ) {
             left_motor_speed = 100;
             right_motor_speed = 50;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_turn_left" ).click(function( event ) {
-            left_motor_speed = -50;
-            right_motor_speed = 50;
+            left_motor_speed = -100;
+            right_motor_speed = 100;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_stop" ).click(function( event ) {
             left_motor_speed = 0;
             right_motor_speed = 0;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_turn_right" ).click(function( event ) {
-            left_motor_speed = 50;
-            right_motor_speed = -50;
+            left_motor_speed = 100;
+            right_motor_speed = -100;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_back_left" ).click(function( event ) {
             left_motor_speed = -40;
             right_motor_speed = -80;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_back" ).click(function( event ) {
             left_motor_speed = -80;
             right_motor_speed = -80;
+            send_command_from_button();
             event.preventDefault();
         });
         $( "#button_back_right" ).click(function( event ) {
             left_motor_speed = -80;
             right_motor_speed = -40;
+            send_command_from_button();
             event.preventDefault();
         });
     });
@@ -106,12 +127,19 @@
         $("#mcu_temp").text( data.temp + " V");
     }
     
-    function send_command_parameters()
+    function timed_command_sending()
     {
-        $.getJSON("api/", { motorR: right_motor_speed, motorL: left_motor_speed }, command_responded);
+        if(command_sent == 1)
+        {
+            command_sent = 0;
+        }
+        else
+        {
+            send_command_parameters();
+        }
     }
     
-    setInterval(send_command_parameters, 1000);
+    setInterval(timed_command_sending, 1000);
 </script>
 
 </body>

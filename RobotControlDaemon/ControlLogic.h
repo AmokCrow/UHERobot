@@ -14,6 +14,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <semaphore.h>
+#include <time.h>
+
 #include <list>
 
 #include "MessageParser.h"
@@ -60,6 +63,8 @@ private:
   RobotBoard2Interpreter mInterpreter;
 
   volatile unsigned int mReceivedCommand;
+
+  sem_t mSemCommandReceived;
 };
 
 #endif // CONTROL_LOGIC__H

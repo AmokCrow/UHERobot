@@ -16,8 +16,8 @@ ControlLogic::ControlLogic(const char* serialPort)
     , mInterpreter()
     , mReceivedCommand(0)
 {
-
-
+    // SEM_FAILED
+    sem_init(&mSemCommandReceived, 0, 0);
 }
 
 ControlLogic::~ControlLogic()
@@ -49,7 +49,12 @@ void ControlLogic::run()
 
     while(roundCounter < 120)
     {
-        usleep(1000000L);
+        //usleep(1000000L);
+        timespec timeout;
+        clock_gettime(CLOCK_REALTIME, &timeout);
+        timeout.tv_sec += 1;
+
+        sem_timedwait(&mSemCommandReceived, &timeout);
         // std::cout << "Slept" << std::endl;
 
         // Note!: Took out sending here to better test the main sending function.
@@ -193,6 +198,7 @@ void ControlLogic::serveCall(const std::string& query, const std::string &uri, c
     if(validCmdParamFound == true)
     {
         mReceivedCommand = 1;
+        sem_post(&mSemCommandReceived);
     }
 }
 
