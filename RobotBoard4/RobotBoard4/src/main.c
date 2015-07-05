@@ -30,9 +30,14 @@
 #include <string.h>
 
 #include "CommandInterpreter.h"
+#include "ServoTimer.h"
 
-#define PIN_DEBUG_TX IOPORT_CREATE_PIN(PORTD, 3)
-#define PIN_DEBUG_RX IOPORT_CREATE_PIN(PORTD, 2)
+//#define PIN_DEBUG_TX IOPORT_CREATE_PIN(PORTD, 3)
+//#define PIN_DEBUG_RX IOPORT_CREATE_PIN(PORTD, 2)
+
+#define PIN_SERVO1 IOPORT_CREATE_PIN(PORTD, 3)
+#define PIN_SERVO2 IOPORT_CREATE_PIN(PORTD, 2)
+
 #define PIN_PWR_CPU  IOPORT_CREATE_PIN(PORTD, 7)
 
 #define PIN_CMD_TX   IOPORT_CREATE_PIN(PORTE, 3)
@@ -46,6 +51,18 @@
 #define PIN_MOT_OC0CHS IOPORT_CREATE_PIN(PORTC, 5)
 #define PIN_MOT_OC0DLS IOPORT_CREATE_PIN(PORTC, 6)
 #define PIN_MOT_OC0DHS IOPORT_CREATE_PIN(PORTC, 7)
+
+ServoTimer_Servo_t servos[2] =
+{
+    {
+        PIN_SERVO1,
+        100
+    },
+    {
+        PIN_SERVO2,
+        100
+    }
+};
 
 void init_avr_asf_libraries(void)
 {
@@ -201,8 +218,10 @@ volatile int16_t m0speed = 0;
 volatile int16_t m1speed = 0;
 volatile uint8_t spdChange = 0;
 
-volatile CommIntBuff_t debugCmdBuff;
+
 volatile CommIntBuff_t cmdBuff;
+/*
+volatile CommIntBuff_t debugCmdBuff;
 
 ISR(USARTD0_RXC_vect)
 {
@@ -230,7 +249,7 @@ ISR(USARTD0_RXC_vect)
         }
     }
 }
-
+*/
 uint8_t inCommBuff[80];
 volatile uint8_t inCommLength = 0;
 
@@ -247,7 +266,8 @@ ISR(USARTE0_RXC_vect)
             motor_set_speed(m0speed, 0);
             motor_set_speed(m1speed, 1);
             
-            // TODO: Set servo positions.
+            servos[0].pos = cmdBuff.cmdParams[7];
+            servos[1].pos = cmdBuff.cmdParams[9];
         }
         else if((cmdBuff.cmdParams[0] == 3) && (cmdBuff.cmdParamsLength == 5))
         {
@@ -271,20 +291,20 @@ void configure_uarts(void)
 {
     usart_serial_options_t uOpts;
     
-    uOpts.baudrate = 9600;
+    //uOpts.baudrate = 9600;
     uOpts.charlength = USART_CHSIZE_8BIT_gc;
     uOpts.paritytype = USART_PMODE_DISABLED_gc;
     uOpts.stopbits = false;
     
-    ioport_set_pin_mode(PIN_DEBUG_TX, IOPORT_MODE_TOTEM);
-    ioport_set_pin_dir(PIN_DEBUG_TX, IOPORT_DIR_OUTPUT);
+    //ioport_set_pin_mode(PIN_DEBUG_TX, IOPORT_MODE_TOTEM);
+    //ioport_set_pin_dir(PIN_DEBUG_TX, IOPORT_DIR_OUTPUT);
     
     ioport_set_pin_mode(PIN_PWR_CPU, IOPORT_MODE_TOTEM);
     ioport_set_pin_level(PIN_PWR_CPU, true);
     ioport_set_pin_dir(PIN_PWR_CPU, IOPORT_DIR_OUTPUT);
     
-    usart_serial_init(&USARTD0, &uOpts);
-    usart_set_rx_interrupt_level(&USARTD0, USART_INT_LVL_LO);
+    //usart_serial_init(&USARTD0, &uOpts);
+    //usart_set_rx_interrupt_level(&USARTD0, USART_INT_LVL_LO);
     
     ioport_set_pin_mode(PIN_CMD_TX, IOPORT_MODE_TOTEM);
     ioport_set_pin_dir(PIN_CMD_TX, IOPORT_DIR_OUTPUT);
@@ -383,6 +403,10 @@ int main (void)
     adc_init();
     
     adc_enable(&ADCA);
+    
+    
+    ServoTimer_init(&TCD0, servos, 2);
+    
     
     cpu_irq_enable(); // A new name for sei()
 
