@@ -29,6 +29,11 @@ RobotBoard2Interpreter::RobotBoard2Interpreter()
     produceJson();
 
     pthread_mutex_init(&mMutex, NULL);
+
+    for(unsigned int i = 0; i < 8; i++)
+    {
+        setServoPos(i, 90);
+    }
 }
 
 void RobotBoard2Interpreter::getSettingPacket(uint8_t* outPacketLoc, unsigned int& outPacketLength)
@@ -244,6 +249,11 @@ void RobotBoard2Interpreter::setServoPos(unsigned int servoNum, uint16_t pos)
         return;
     }
 
+    if(pos > 250)
+    {
+        pos = 250;
+    }
+
     enterProtected();
 
     mTxBuff[MsgLengthLen + MsgTypeLen + (2 * MotorLen) + (servoNum * ServoLen)] = (pos >> 8) & 0xFF;
@@ -254,28 +264,30 @@ void RobotBoard2Interpreter::setServoPos(unsigned int servoNum, uint16_t pos)
 
 void RobotBoard2Interpreter::setCameraPan(int degrees)
 {
-    if((degrees > 90) || (degrees < (-90)))
+    if((degrees > 180) || (degrees < 0))
     {
         return;
     }
 
-    int32_t tmp = degrees + 90;
-    tmp *= 65535;
-    tmp /= 180;
+    float fTmp = degrees;
 
-    setServoPos(0, tmp);
+    fTmp /= 180.0f;
+    fTmp *= 250.0f;
+
+    setServoPos(0, fTmp);
 }
 
 void RobotBoard2Interpreter::setCameraTilt(int degrees)
 {
-    if((degrees > 90) || (degrees < (-90)))
+    if((degrees > 180) || (degrees < 0))
     {
         return;
     }
 
-    int32_t tmp = degrees + 90;
-    tmp *= 65535;
-    tmp /= 180;
+    float fTmp = degrees;
 
-    setServoPos(1, tmp);
+    fTmp /= 180.0f;
+    fTmp *= 250.0f;
+
+    setServoPos(1, fTmp);
 }
