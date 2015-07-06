@@ -1,0 +1,7 @@
+# Object files.
+*.[oa]
+# Qt user-specific settings.
+*.pro.user
+# Backups left by Gedit and some other editors.
+*~
+
