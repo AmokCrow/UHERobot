@@ -345,6 +345,12 @@
     <Folder Include="src\config\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\ServoTimer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ServoTimer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\asf.h">
       <SubType>compile</SubType>
     </None>
