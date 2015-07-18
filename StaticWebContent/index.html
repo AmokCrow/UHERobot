@@ -9,19 +9,19 @@
 
 <table>
     <tr>
-        <td><button id="button_front_left" type="button">Front left</button></td>
-        <td><button id="button_forward" type="button">Forward</button></td>
-        <td><button id="button_front_right" type="button">Front right</button></td>
+        <td><button id="button_front_left" type="button" style="width:100px;height:50px">Front left</button></td>
+        <td><button id="button_forward" type="button" style="width:100px;height:50px">Forward</button></td>
+        <td><button id="button_front_right" type="button" style="width:100px;height:50px">Front right</button></td>
     </tr>
     <tr>
-        <td><button id="button_turn_left" type="button">Turn left</button></td>
-        <td><button id="button_stop" type="button">Stop</button></td>
-        <td><button id="button_turn_right" type="button">Turn right</button></td>
+        <td><button id="button_turn_left" type="button" style="width:100px;height:50px">Turn left</button></td>
+        <td><button id="button_stop" type="button" style="width:100px;height:50px">Stop</button></td>
+        <td><button id="button_turn_right" type="button" style="width:100px;height:50px">Turn right</button></td>
     </tr>
     <tr>
-        <td><button id="button_back_left" type="button">Back left</button></td>
-        <td><button id="button_back" type="button">Back</button></td>
-        <td><button id="button_back_right" type="button">Back right</button></td>
+        <td><button id="button_back_left" type="button" style="width:100px;height:50px">Back left</button></td>
+        <td><button id="button_back" type="button" style="width:100px;height:50px">Back</button></td>
+        <td><button id="button_back_right" type="button" style="width:100px;height:50px">Back right</button></td>
     </tr>
 </table>
 
@@ -42,17 +42,36 @@
     <td>MCU temperature probe:</td><td id="mcu_temp">0 V</td>
     </tr>
 </table>
+<h2>Camera</h2>
+<table>
+    <tr>
+        <td><button id="button_cam_down" style="width:120px">Camera Down</button></td>
+        <td id="field_cam_tilt">-</td>
+        <td><button id="button_cam_up" style="width:120px">Camera Up</button></td>
+    </tr>
+    <tr>
+        <td><button id="button_cam_left" style="width:120px">Camera Left</button></td>
+        <td id="field_cam_pan">-</td>
+        <td><button id="button_cam_right" style="width:120px">Camera Right</button></td>
+    </tr>
+</table>
 
+<h2>Connection</h2>
+<p id="connection_text">-</p>
 
 <script>
     var left_motor_speed = 0;
     var right_motor_speed = 0;
+    var camera_pan = 90;
+    var camera_tilt = 90;
     
     var command_sent = 0;
 
+    var time_from_last_reponse = 0;
+
     function send_command_parameters()
     {
-        $.getJSON("api/", { motorR: right_motor_speed, motorL: left_motor_speed }, command_responded);
+        $.getJSON("api/", { motorR: right_motor_speed, motorL: left_motor_speed, camPan: camera_pan, camTilt: camera_tilt }, command_responded).fail(command_failed);
     }
     
     function send_command_from_button()
@@ -117,6 +136,54 @@
             send_command_from_button();
             event.preventDefault();
         });
+        
+        $( "#button_cam_down" ).click(function( event ) {
+            camera_tilt -= 10;
+            if(camera_tilt < 0)
+            {
+                camera_tilt = 0;
+            }
+            
+            $("#field_cam_tilt").text("<" + camera_tilt + ">");
+            send_command_from_button();
+            event.preventDefault();
+        });
+        $( "#button_cam_up" ).click(function( event ) {
+            camera_tilt += 10;
+            if(camera_tilt > 180)
+            {
+                camera_tilt = 180;
+            }
+            
+            $("#field_cam_tilt").text("<" + camera_tilt + ">");
+            send_command_from_button();
+            event.preventDefault();
+        });
+        $( "#button_cam_left" ).click(function( event ) {
+            camera_pan -= 10;
+            if(camera_tilt < 0)
+            {
+                camera_tilt = 0;
+            }
+            
+            $("#field_cam_pan").text("<" + camera_pan + ">");
+            send_command_from_button();
+            event.preventDefault();
+        });
+        $( "#button_cam_right" ).click(function( event ) {
+            camera_pan += 10;
+            if(camera_pan > 180)
+            {
+                camera_pan = 180;
+            }
+            
+            $("#field_cam_pan").text("<" + camera_pan + ">");
+            send_command_from_button();
+            event.preventDefault();
+        });
+        
+        $("#field_cam_tilt").text("<" + camera_tilt + ">");
+        $("#field_cam_pan").text("<" + camera_pan + ">");
     });
     
     function command_responded(data)
@@ -125,10 +192,20 @@
         $("#main_current").text( data.cc + " A");
         $("#main_voltage").text( data.cv + " V");
         $("#mcu_temp").text( data.temp + " V");
+        
+        time_from_last_reponse = 0;
+        $("#connection_text").html("<span style='color:green'>OK</span>");
+    }
+	
+    function command_failed()
+    {
+        $("#connection_text").html( "No response for <span style='color:red'>" + time_from_last_reponse + "</span> seconds" );
     }
     
     function timed_command_sending()
     {
+        time_from_last_reponse++;
+        
         if(command_sent == 1)
         {
             command_sent = 0;
