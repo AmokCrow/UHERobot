@@ -35,10 +35,11 @@
 //#define PIN_DEBUG_TX IOPORT_CREATE_PIN(PORTD, 3)
 //#define PIN_DEBUG_RX IOPORT_CREATE_PIN(PORTD, 2)
 
-#define PIN_SERVO1 IOPORT_CREATE_PIN(PORTD, 3)
-#define PIN_SERVO2 IOPORT_CREATE_PIN(PORTD, 2)
+#define PIN_SERVO1 IOPORT_CREATE_PIN(PORTD, 1)
+#define PIN_SERVO2 IOPORT_CREATE_PIN(PORTD, 0)
 
-#define PIN_PWR_CPU  IOPORT_CREATE_PIN(PORTD, 7)
+#define PIN_PWR_LED  IOPORT_CREATE_PIN(PORTD, 7)
+#define PIN_PWR_CPU  IOPORT_CREATE_PIN(PORTD, 6)
 
 #define PIN_CMD_TX   IOPORT_CREATE_PIN(PORTE, 3)
 #define PIN_CMD_RX   IOPORT_CREATE_PIN(PORTE, 2)
@@ -51,6 +52,26 @@
 #define PIN_MOT_OC0CHS IOPORT_CREATE_PIN(PORTC, 5)
 #define PIN_MOT_OC0DLS IOPORT_CREATE_PIN(PORTC, 6)
 #define PIN_MOT_OC0DHS IOPORT_CREATE_PIN(PORTC, 7)
+
+#define PIN_RG_LED1 IOPORT_CREATE_PIN(PORTB, 2)
+#define PIN_RG_LED2 IOPORT_CREATE_PIN(PORTB, 3)
+
+void set_led_red(ioport_pin_t pin)
+{
+    ioport_set_pin_level(pin, false);
+    ioport_set_pin_dir(pin, IOPORT_DIR_OUTPUT);
+}
+
+void set_led_green(ioport_pin_t pin)
+{
+    ioport_set_pin_level(pin, true);
+    ioport_set_pin_dir(pin, IOPORT_DIR_OUTPUT);
+}
+
+void set_led_off(ioport_pin_t pin)
+{
+    ioport_set_pin_dir(pin, IOPORT_DIR_INPUT);
+}
 
 ServoTimer_Servo_t servos[2] =
 {
@@ -375,15 +396,22 @@ void adc_init(void)
 }
 
 const AdcLocation_t adcLoc_IntTempSensor = { ADC_CH_MUXINT_TEMP_gc, ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc, 0 };
-const AdcLocation_t adcLoc_CpuCurrent = { ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
-const AdcLocation_t adcLoc_CpuVoltage = { ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
-const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN10_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
+const AdcLocation_t adcLoc_TempSensor = { ADC_CH_MUXPOS_PIN1_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
+const AdcLocation_t adcLoc_CpuCurrent = { ADC_CH_MUXPOS_PIN2_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
+//const AdcLocation_t adcLoc_CpuCurrent = { ADC_CH_MUXPOS_PIN5_gc | ADC_CH_MUXNEG_GND_MODE4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 };
+const AdcLocation_t adcLoc_CpuVoltage = { ADC_CH_MUXPOS_PIN3_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
+//const AdcLocation_t adcLoc_CpuVoltage = { ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
+const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNEG_PIN4_gc, ADC_CH_INPUTMODE_DIFFWGAIN_gc | ADC_CH_GAIN_DIV2_gc, 1 }; // TODO: Adjust gain after installing component
+//const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN10_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
+const AdcLocation_t adcLoc_MotorVoltage = { ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 }; // 
 
 int main (void)
 {
     uint16_t txLength;
     uint8_t i;
     uint16_t adcResult;
+    
+    uint8_t cycleCounter = 0;
     
 	// Insert system clock initialization code here (sysclk_init()).
     init_avr_asf_libraries();
@@ -413,38 +441,59 @@ int main (void)
 
 	while(1)
     {
+        cycleCounter++;
+        
+        if((cycleCounter % 2) == 0)
+        {
+            set_led_green(PIN_RG_LED1);
+        }
+        else
+        {
+            set_led_red(PIN_RG_LED1);
+        }
         
         adc_startOnSetting(&adcLoc_IntTempSensor);
         adcResult = adc_secondConversion();
         rawBuffer[0] = adcResult >> 8;
         rawBuffer[1] = adcResult & 0xFF;
         
-        adc_startOnSetting(&adcLoc_CpuCurrent);
+        adc_startOnSetting(&adcLoc_TempSensor);
         adcResult = adc_secondConversion();
         rawBuffer[2] = adcResult >> 8;
         rawBuffer[3] = adcResult & 0xFF;
         
-        adc_startOnSetting(&adcLoc_CpuVoltage);
+        adc_startOnSetting(&adcLoc_CpuCurrent);
         adcResult = adc_secondConversion();
         rawBuffer[4] = adcResult >> 8;
         rawBuffer[5] = adcResult & 0xFF;
         
-        
-        adc_startOnSetting(&adcLoc_MotorCurrent);
+        adc_startOnSetting(&adcLoc_CpuVoltage);
         adcResult = adc_secondConversion();
         rawBuffer[6] = adcResult >> 8;
         rawBuffer[7] = adcResult & 0xFF;
         
+        adc_startOnSetting(&adcLoc_MotorCurrent);
+        adcResult = adc_secondConversion();
+        rawBuffer[8] = adcResult >> 8;
+        rawBuffer[9] = adcResult & 0xFF;
+        
+        adc_startOnSetting(&adcLoc_MotorVoltage);
+        adcResult = adc_secondConversion();
+        rawBuffer[10] = adcResult >> 8;
+        rawBuffer[11] = adcResult & 0xFF;
+        
         //rawBuffer[6] = 0;
         //rawBuffer[7] = 0;
         
-        txLength = interpreterFormMessage(txBuffer, rawBuffer, 8);
+        txLength = interpreterFormMessage(txBuffer, rawBuffer, 12);
         
         for(i = 0; i < txLength; i++)
         {
             usart_serial_putchar(&USARTE0, txBuffer[i]);
         }
         
+        // USARTD0 has been disabled.
+        /*
         for(i = 0; i < txLength; i++)
         {
             usart_serial_putchar(&USARTD0, txBuffer[i]);
@@ -476,6 +525,7 @@ int main (void)
                 usart_serial_putchar(&USARTD0, txBuffer[i]);
             }
         }
+        */
         
         delay_s(1);
     }
