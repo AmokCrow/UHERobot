@@ -409,7 +409,9 @@ int main (void)
 {
     uint16_t txLength;
     uint8_t i;
-    uint16_t adcResult;
+    int16_t adcResult;
+    
+    uint8_t* pBuff;
     
     uint8_t cycleCounter = 0;
     
@@ -452,40 +454,44 @@ int main (void)
             set_led_red(PIN_RG_LED1);
         }
         
+        pBuff = rawBuffer;
+        *pBuff++ = 0x01; // Tag for the adc results data
+        *pBuff++ = 12; // Length for the adc results data
+        
         adc_startOnSetting(&adcLoc_IntTempSensor);
         adcResult = adc_secondConversion();
-        rawBuffer[0] = adcResult >> 8;
-        rawBuffer[1] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         adc_startOnSetting(&adcLoc_TempSensor);
         adcResult = adc_secondConversion();
-        rawBuffer[2] = adcResult >> 8;
-        rawBuffer[3] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         adc_startOnSetting(&adcLoc_CpuCurrent);
         adcResult = adc_secondConversion();
-        rawBuffer[4] = adcResult >> 8;
-        rawBuffer[5] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         adc_startOnSetting(&adcLoc_CpuVoltage);
         adcResult = adc_secondConversion();
-        rawBuffer[6] = adcResult >> 8;
-        rawBuffer[7] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         adc_startOnSetting(&adcLoc_MotorCurrent);
         adcResult = adc_secondConversion();
-        rawBuffer[8] = adcResult >> 8;
-        rawBuffer[9] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         adc_startOnSetting(&adcLoc_MotorVoltage);
         adcResult = adc_secondConversion();
-        rawBuffer[10] = adcResult >> 8;
-        rawBuffer[11] = adcResult & 0xFF;
+        *pBuff++ = adcResult >> 8;
+        *pBuff++ = adcResult & 0xFF;
         
         //rawBuffer[6] = 0;
         //rawBuffer[7] = 0;
         
-        txLength = interpreterFormMessage(txBuffer, rawBuffer, 12);
+        txLength = interpreterFormMessage(txBuffer, rawBuffer, 14);
         
         for(i = 0; i < txLength; i++)
         {
