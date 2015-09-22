@@ -39,6 +39,8 @@ private:
     void exitProtected();
 
     void extractValues(const uint8_t* buffer, uint16_t length);
+    void extractAdcValues(const uint8_t* buffer, uint16_t length);
+
     void producePlaintext();
     void produceHtml();
     void produceJson();
@@ -82,8 +84,8 @@ private:
     char bufferPlaintext1[100];
     char bufferPlaintext2[100];
 
-    char bufferHtml1[100];
-    char bufferHtml2[100];
+    char bufferHtml1[200];
+    char bufferHtml2[200];
 
     char bufferJson1[100];
     char bufferJson2[100];
@@ -96,6 +98,7 @@ private:
 
     // temp, cpu_curr, cpu_volt, mot_curr
     float mTemperature;
+    float mMcuTemperature;
     float mCpuCurrent;
     float mCpuVoltage;
     float mMotorCurrent;

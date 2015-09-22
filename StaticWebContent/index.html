@@ -30,7 +30,7 @@
     <td>Motor current:</td><td id="motor_current">0 A</td>
     </tr>
     <tr>
-    <td>Motor voltage:</td><td id="motor_current">N/A</td>
+    <td>Motor voltage:</td><td id="motor_voltage">0 V</td>
     </tr>
     <tr>
     <td>Main battery current:</td><td id="main_current">0 A</td>
@@ -39,7 +39,7 @@
     <td>Main battery voltage:</td><td id="main_voltage">0 V</td>
     </tr>
     <tr>
-    <td>MCU temperature probe:</td><td id="mcu_temp">0 V</td>
+    <td>PCB temperature:</td><td id="mcu_temp">0 C</td>
     </tr>
 </table>
 <h2>Camera</h2>
@@ -189,9 +189,10 @@
     function command_responded(data)
     {
         $("#motor_current").text( data.mc + " A");
+        $("#motor_voltage").text( data.mv + " V");
         $("#main_current").text( data.cc + " A");
         $("#main_voltage").text( data.cv + " V");
-        $("#mcu_temp").text( data.temp + " V");
+        $("#mcu_temp").text( data.temp + " C");
         
         time_from_last_reponse = 0;
         $("#connection_text").html("<span style='color:green'>OK</span>");

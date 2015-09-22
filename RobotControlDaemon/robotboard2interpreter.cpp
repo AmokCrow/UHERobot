@@ -67,8 +67,19 @@ void RobotBoard2Interpreter::setParamsSerial(const uint8_t *buff, uint16_t buffL
 
 void RobotBoard2Interpreter::extractValues(const uint8_t* buffer, uint16_t length)
 {
-    uint16_t tmp = buffer[0] << 8;
+    if((buffer[0] == 1) && length >= 12)
+    {
+        extractAdcValues(&(buffer[2]), length - 2);
+    }
+}
+
+void RobotBoard2Interpreter::extractAdcValues(const uint8_t* buffer, uint16_t length)
+{
+    int16_t tmp;
     float voltage;
+
+    // --MCU Internal temperature--
+    tmp = buffer[0] << 8;
     tmp |= buffer[1];
 
     // The ADC has a 12bit result. But for signed measurements, one bit is the sign.
@@ -77,33 +88,56 @@ void RobotBoard2Interpreter::extractValues(const uint8_t* buffer, uint16_t lengt
 
     // Temperature is an internal mesurement, unsigned, no gain.
     // TODO: find out the temperature/voltage coefficient and zero-point. They're individual for processors.
-    mTemperature = (tmp * 1.0f) / 4096.0f * (3.3f / 1.6f);
+    mMcuTemperature = (tmp * 1.0f) / 4096.0f * (3.3f / 1.6f);
 
+    // --Temperature sensor--
     tmp = buffer[2] << 8;
     tmp |= buffer[3];
 
-    // The full scale of the current sensors is +/-12A. Zero point is Vcc/2.
-    // The input has 0.5x gain. Mode is signed (although the result here is not,
-    //  as reference is GND), so full-scale is 2**11.
+    // Measurement is signed and thus 11bit. Div/2 gain is in effect.
     voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
-    // Deduct 2**11 / 2 == 1024 to make result signed and
-    mCpuCurrent = ((voltage / 3.3f) - 0.5f) * 2.0f * 12.0f;
+    // The sensor type in use is MCP9700.
+    // Vout = TCoefficient * Ta + V0deg => Ta = (Vout - V0deg) / TCoefficient
+    // V0deg is 500mV = 0.5V
+    // TCoefficient is 10.0mV/degC = 0.01
+    mTemperature = (voltage - 0.5f) / 0.01f;
 
+    // --CPU current--
     tmp = buffer[4] << 8;
     tmp |= buffer[5];
 
-    // Differential, but with no gain, as input is 1/11 of the battery voltage.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
-    mCpuVoltage = voltage * 11.0f;
+    // Current sense resistor has 2x parallel 0.039 Ohms.
+    // Sensor puts out voltage over sense resistor multiplied by 100.
+    // Gain setting is Div/2.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    mCpuCurrent = voltage / (0.039 / 2.0) / 100;
 
+    // --CPU battery voltage--
     tmp = buffer[6] << 8;
     tmp |= buffer[7];
 
-    // Same sensor tupe as CPU current, above.
-    //voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
-    // Due to pin mapping, has to actually be measured without gain for now.
+    // Differential, but with no gain, as input is 1/7 of the battery voltage through resistor division.
     voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
-    mMotorCurrent = ((voltage / 3.3f) - 0.5f) * 2.0f * 12.0f;
+    mCpuVoltage = voltage * ((20.0f + 3.3f) / 3.3f);
+
+    // --Motor current--
+    tmp = buffer[8] << 8;
+    tmp |= buffer[9];
+
+    // The full scale of the current sensors is +/-12A. Zero point is Vcc/2.
+    // The input has 0.5x gain. Mode is signed, so full-scale is 2**11.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
+    // Deduct 2**11 / 2 == 1024 to make result signed and
+    mMotorCurrent = (voltage / (3.3f / 2.0f)) * 12.0f;
+
+    // --Motor voltage--
+    tmp = buffer[10] << 8;
+    tmp |= buffer[11];
+
+    // Signed, no gain.
+    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
+    // The voltage comes through a dividing resistors. Calculate backwards to original.
+    mMotorVoltage = voltage * ((20.0f + 4.7f) / 4.7f);
 }
 
 void RobotBoard2Interpreter::producePlaintext()
@@ -133,8 +167,8 @@ void RobotBoard2Interpreter::produceHtml()
         mpTmp = bufferHtml1;
     }
 
-    std::sprintf(mpTmp, "<p>Temperature sensor: %fV<br> CPU Battery: %fV <br> CPU Current: %fA<br>Motor Voltage: N/A<br>Motor Current: %fA </p>",
-                 mTemperature, mCpuVoltage, mCpuCurrent, mMotorCurrent);
+    std::sprintf(mpTmp, "<p>Temperature sensor: %fV<br> CPU Battery: %fV <br> CPU Current: %fA<br>Motor Voltage: %fV<br>Motor Current: %fA</p>",
+                 mTemperature, mCpuVoltage, mCpuCurrent, mMotorVoltage ,mMotorCurrent);
 
     mpHtml = mpTmp;
 }
@@ -151,7 +185,7 @@ void RobotBoard2Interpreter::produceJson()
     }
 
     std::sprintf(mpTmp, "{ \"temp\": %.1f, \"mv\": %.1f, \"mc\": %.1f, \"cv\": %.1f, \"cc\": %.1f }",
-                 mTemperature, 0.0f, mMotorCurrent, mCpuVoltage, mCpuCurrent );
+                 mTemperature, mMotorVoltage, mMotorCurrent, mCpuVoltage, mCpuCurrent );
 
     mpJson = mpTmp;
 }
