@@ -31,9 +31,10 @@
 
 #include "CommandInterpreter.h"
 #include "ServoTimer.h"
+#include "MotorFunctions.h"
 
-//#define PIN_DEBUG_TX IOPORT_CREATE_PIN(PORTD, 3)
-//#define PIN_DEBUG_RX IOPORT_CREATE_PIN(PORTD, 2)
+#define PIN_DEBUG_TX IOPORT_CREATE_PIN(PORTD, 3)
+#define PIN_DEBUG_RX IOPORT_CREATE_PIN(PORTD, 2)
 
 #define PIN_SERVO1 IOPORT_CREATE_PIN(PORTD, 1)
 #define PIN_SERVO2 IOPORT_CREATE_PIN(PORTD, 0)
@@ -43,15 +44,6 @@
 
 #define PIN_CMD_TX   IOPORT_CREATE_PIN(PORTE, 3)
 #define PIN_CMD_RX   IOPORT_CREATE_PIN(PORTE, 2)
-
-#define PIN_MOT_OC0ALS IOPORT_CREATE_PIN(PORTC, 0)
-#define PIN_MOT_OC0AHS IOPORT_CREATE_PIN(PORTC, 1)
-#define PIN_MOT_OC0BLS IOPORT_CREATE_PIN(PORTC, 2)
-#define PIN_MOT_OC0BHS IOPORT_CREATE_PIN(PORTC, 3)
-#define PIN_MOT_OC0CLS IOPORT_CREATE_PIN(PORTC, 4)
-#define PIN_MOT_OC0CHS IOPORT_CREATE_PIN(PORTC, 5)
-#define PIN_MOT_OC0DLS IOPORT_CREATE_PIN(PORTC, 6)
-#define PIN_MOT_OC0DHS IOPORT_CREATE_PIN(PORTC, 7)
 
 #define PIN_RG_LED1 IOPORT_CREATE_PIN(PORTB, 2)
 #define PIN_RG_LED2 IOPORT_CREATE_PIN(PORTB, 3)
@@ -72,7 +64,7 @@ void set_led_off(ioport_pin_t pin)
 {
     ioport_set_pin_dir(pin, IOPORT_DIR_INPUT);
 }
-
+/*
 ServoTimer_Servo_t servos[2] =
 {
     {
@@ -81,6 +73,18 @@ ServoTimer_Servo_t servos[2] =
     },
     {
         PIN_SERVO2,
+        100
+    }
+};
+*/
+ServoTimer_Servo_t servos[2] =
+{
+    {
+        PIN_DEBUG_TX,
+        100
+    },
+    {
+        PIN_DEBUG_RX,
         100
     }
 };
@@ -93,146 +97,6 @@ void init_avr_asf_libraries(void)
     irq_initialize_vectors();
     cpu_irq_enable();
     ioport_init();
-}
-
-#define MOTOR_TIMER_PERIOD 3200
-#define MOTOR_ALWAYS_ON_TIMER_VALUE (MOTOR_TIMER_PERIOD + 10)
-
-void configure_motor_clock(void)
-{
-    tc_enable(&TCC0);
-    tc_write_period(&TCC0, MOTOR_TIMER_PERIOD);
-    tc_enable_cc_channels(&TCC0, TC_CCAEN | TC_CCBEN | TC_CCCEN | TC_CCDEN );
-    
-    tc_write_cc(&TCC0, TC_CCA, MOTOR_ALWAYS_ON_TIMER_VALUE);
-    tc_write_cc(&TCC0, TC_CCB, MOTOR_ALWAYS_ON_TIMER_VALUE);
-    tc_write_cc(&TCC0, TC_CCC, MOTOR_ALWAYS_ON_TIMER_VALUE);
-    tc_write_cc(&TCC0, TC_CCD, MOTOR_ALWAYS_ON_TIMER_VALUE);
-    
-    tc_set_wgm(&TCC0, TC_WG_SS);
-    
-    //tc_awex_enable_cwcm(&AWEXC);
-    tc_awex_enable_cca_deadtime(&AWEXC);
-    tc_awex_enable_ccb_deadtime(&AWEXC);
-    tc_awex_enable_ccc_deadtime(&AWEXC);
-    tc_awex_enable_ccd_deadtime(&AWEXC);
-    
-    tc_awex_set_dti_both(&AWEXC, 0x80);
-    tc_awex_set_dti_both_buffer(&AWEXC, 0x80);
-    tc_awex_set_output_override(&AWEXC, 0xFF);
-}
-
-void start_motor_clock(void)
-{
-    //tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1024_gc);
-    tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);
-}
-
-void stop_motor_clock(void)
-{
-    tc_write_clock_source(&TCC0, TC_CLKSEL_OFF_gc);
-}
-
-void enable_motor_pins(void)
-{
-    ioport_set_pin_dir(PIN_MOT_OC0ALS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0AHS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0BLS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0BHS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0CLS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0CHS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0DLS, IOPORT_DIR_OUTPUT);
-    ioport_set_pin_dir(PIN_MOT_OC0DHS, IOPORT_DIR_OUTPUT);
-}
-
-// Motor 0 is on pins PC0..PC3. Motor 1 is PC4..PC7.
-uint8_t motor0_direction = 0; // 0 for positive speed, 1 for negative speed, 2 for "no change
-uint8_t motor1_direction = 0; // 0 for positive speed, 1 for negative speed
-uint8_t motors_out_ena_pattern = 0;
-
-void motor0_set_speed(uint8_t direction, uint16_t speed)
-{
-    if(direction != motor0_direction)
-    {
-        motor0_direction = direction;
-        
-        if(direction == 0)
-        {
-            tc_write_cc_buffer(&TCC0, TC_CCB, MOTOR_ALWAYS_ON_TIMER_VALUE);
-        }
-        else
-        {
-            tc_write_cc_buffer(&TCC0, TC_CCA, MOTOR_ALWAYS_ON_TIMER_VALUE);
-        }
-    }
-    
-    if(direction == 0)
-    {
-        tc_write_cc_buffer(&TCC0, TC_CCA, speed);
-    }
-    else
-    {
-        tc_write_cc_buffer(&TCC0, TC_CCB, speed);
-    }
-}
-
-void motor1_set_speed(uint8_t direction, uint16_t speed)
-{
-    if(direction != motor1_direction)
-    {
-        motor1_direction = direction;
-        
-        if(direction == 0)
-        {
-            tc_write_cc_buffer(&TCC0, TC_CCD, MOTOR_ALWAYS_ON_TIMER_VALUE);
-        }
-        else
-        {
-            tc_write_cc_buffer(&TCC0, TC_CCC, MOTOR_ALWAYS_ON_TIMER_VALUE);
-        }
-    }
-    
-    if(direction == 0)
-    {
-        tc_write_cc_buffer(&TCC0, TC_CCC, speed);
-    }
-    else
-    {
-        tc_write_cc_buffer(&TCC0, TC_CCD, speed);
-    }
-}
-
-void motor_set_speed(int16_t speed, uint8_t motor)
-{
-    uint8_t direction = 0;
-    
-    if(speed >= 0)
-    {
-        direction = 0;
-    }
-    else if(speed < 0)
-    {
-        direction = 1;
-        speed *= (-1);
-    }
-    
-    if(speed > MOTOR_TIMER_PERIOD)
-    {
-        speed = MOTOR_TIMER_PERIOD;
-    }
-    
-    // The timers want the speeds backwards so that the high and low side work correctly
-    speed = MOTOR_TIMER_PERIOD - speed;
-    
-    if(motor == 0)
-    {
-        motor0_set_speed(direction, speed);
-    }
-    else
-    {
-        motor1_set_speed(direction, speed);
-    }
-    
 }
 
 volatile int16_t m0speed = 0;
@@ -274,6 +138,8 @@ ISR(USARTD0_RXC_vect)
 uint8_t inCommBuff[80];
 volatile uint8_t inCommLength = 0;
 
+volatile uint8_t commandsReceived = 0;
+
 ISR(USARTE0_RXC_vect)
 {
     if(interpreterReceiveByte(&cmdBuff, usart_getchar(&USARTE0)))
@@ -299,6 +165,10 @@ ISR(USARTE0_RXC_vect)
             motor_set_speed(m0speed, 0);
             motor_set_speed(m1speed, 1);
         }
+        
+        commandsReceived = 1;
+        ioport_set_pin_level(PIN_SERVO1, true);
+        ioport_set_pin_level(PIN_SERVO2, true);
         
         memcpy(inCommBuff, cmdBuff.cmdParams, cmdBuff.cmdParamsLength);
         inCommLength = cmdBuff.cmdParamsLength;
@@ -332,6 +202,7 @@ void configure_uarts(void)
     
     uOpts.baudrate = 57600UL;
     usart_serial_init(&USARTE0, &uOpts);
+    // Warning: Interrupt level must match that of the 1s periodic timer.
     usart_set_rx_interrupt_level(&USARTE0, USART_INT_LVL_LO);
     
 }
@@ -405,6 +276,41 @@ const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN7_gc | ADC_CH_MUXNE
 //const AdcLocation_t adcLoc_MotorCurrent = { ADC_CH_MUXPOS_PIN10_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 };
 const AdcLocation_t adcLoc_MotorVoltage = { ADC_CH_MUXPOS_PIN6_gc | ADC_CH_MUXNEG_GND_MODE3_gc, ADC_CH_INPUTMODE_DIFF_gc, 1 }; // 
 
+void period_check_timer_callback(void)
+{
+    if(commandsReceived == 0)
+    {
+        motor_set_speed(0, 0);
+        motor_set_speed(0, 1);
+        
+        ioport_set_pin_level(PIN_SERVO1, false);
+        ioport_set_pin_level(PIN_SERVO2, false);
+    }
+    
+    commandsReceived = 0;
+}
+
+void config_period_check_timer(TC0_t* pTimer)
+{
+    // Enable timer.
+    tc_enable(pTimer);
+    
+    // Set callbacks.
+    tc_set_overflow_interrupt_callback(pTimer, period_check_timer_callback);
+    
+    // Low interrupt level; timing is not very tight.
+    tc_set_overflow_interrupt_level(pTimer, TC_INT_LVL_LO);
+    
+    // Disable PWM modes if any.
+    tc_set_wgm(pTimer, TC_WGMODE_NORMAL_gc);
+    
+    // System clock is 8MHz. This should therefore give an approximately 1.5 second timeout.
+    tc_write_period(pTimer, 12000);
+    
+    // Set clock source. This will start the timer.
+    tc_write_clock_source(pTimer, TC_CLKSEL_DIV1024_gc);
+}
+
 int main (void)
 {
     uint16_t txLength;
@@ -424,11 +330,14 @@ int main (void)
     
     start_motor_clock();
     
+    ioport_set_pin_dir(PIN_SERVO1, IOPORT_DIR_OUTPUT);
+    ioport_set_pin_dir(PIN_SERVO2, IOPORT_DIR_OUTPUT);
+    
     configure_uarts();
     
     // TODO: Set pull-up on RX-pins.
     
-    
+    config_period_check_timer(&TCE0);
     
     adc_init();
     
