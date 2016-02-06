@@ -9,5 +9,9 @@ add_executable (RobotControlDaemon main.cpp base16message.cpp MessageParser.cpp 
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-target_link_libraries(RobotControlDaemon fcgi fcgiServer pthread)
+find_library(myFcgi fcgi)
+#find_library(myPthread pthread PATH_SUFFIXES arm-linux-gnueabi)
+
+#target_link_libraries(RobotControlDaemon fcgi fcgiServer pthread)
+target_link_libraries(RobotControlDaemon ${myFcgi} fcgiServer pthread)
 
