@@ -1,0 +1,15 @@
+set(CMAKE_SYSTEM_NAME Linux)
+
+set(CMAKE_SYSROOT /mnt/ariettaroot)
+#set(CMAKE_STAGING_PREFIX /home/devel/stage)
+
+set(CMAKE_FIND_ROOT_PATH  /mnt/ariettaroot)
+#set(CMAKE_LIBRARY_ARCHITECTURE arm-linux-gnueabi)
+
+set(CMAKE_C_COMPILER arm-linux-gnueabi-gcc)
+set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
