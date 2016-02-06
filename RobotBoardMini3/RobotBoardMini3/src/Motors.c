@@ -38,7 +38,7 @@ void motor_init(void)
     scif_start_gclk(AVR32_PM_GCLK_PWMA, &scif_genclock_opts);
     
     // Enable the channels. This should set the TOP value to around 200.
-    pwma_config_enable(&AVR32_PWMA, 6000UL, 6000UL * 200UL, 0);
+    pwma_config_enable(&AVR32_PWMA, 6000UL, 6000UL * TOP_VALUE, 0);
     
     motor_set_speed(0, 0);
     motor_set_speed(0, 1);

@@ -85,6 +85,7 @@ int main (void)
     
     InitPins();
     InitUart();
+    motor_init();
     
     // Why does it get skipped?
     Analogs_Init();
@@ -93,6 +94,10 @@ int main (void)
     AVR32_USART2.ier = AVR32_USART_IER_RXRDY_MASK;
     
     Enable_global_interrupt();
+    
+    // Enable power to the CPU and motors.
+    gpio_local_set_gpio_pin(PIN_5V_OUT);
+    gpio_local_set_gpio_pin(PIN_ENA_MOT_PWR);
     
     adcResultsTxRawBuff[0] = 0x01;
     adcResultsTxRawBuff[1] = 12;
@@ -118,17 +123,17 @@ int main (void)
             txBuff[tmp] = 0;
             
             usart_write_line(&AVR32_USART2, (const char*)txBuff);
-        }
-        
-        if (ledPos == 0)
-        {
-            ledPos = 1;
-            gpio_local_set_gpio_pin(PIN_STATUS_LED);
-        }
-        else
-        {
-            ledPos = 0;
-            gpio_local_clr_gpio_pin(PIN_STATUS_LED);
+            
+            if (ledPos == 0)
+            {
+                ledPos = 1;
+                gpio_local_set_gpio_pin(PIN_STATUS_LED);
+            }
+            else
+            {
+                ledPos = 0;
+                gpio_local_clr_gpio_pin(PIN_STATUS_LED);
+            }
         }
         
         
