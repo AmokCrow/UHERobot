@@ -44,22 +44,27 @@ volatile uint8_t commandsReceived = 0;
 
 __attribute__((__interrupt__)) void uart_rx_handler(void)
 {
-    if(interpreterReceiveByte(&cmdBuff, usart_getchar(&AVR32_USART2)))
+    usart_reset_status(&AVR32_USART2); 
+    
+    while (usart_test_hit(&AVR32_USART2))
     {
-        if((cmdBuff.cmdParams[0] == 23) && (cmdBuff.cmdParams[1] == 0) && (cmdBuff.cmdParamsLength == 23))
+        if(interpreterReceiveByte(&cmdBuff, (AVR32_USART2.rhr) & 0xFF))
         {
-            m0speed = (cmdBuff.cmdParams[2] << 8) | cmdBuff.cmdParams[3];
-            m1speed = (cmdBuff.cmdParams[4] << 8) | cmdBuff.cmdParams[5];
-            spdChange = 1;
+            if((cmdBuff.cmdParams[0] == 23) && (cmdBuff.cmdParams[1] == 0) && (cmdBuff.cmdParamsLength == 23))
+            {
+                m0speed = (cmdBuff.cmdParams[2] << 8) | cmdBuff.cmdParams[3];
+                m1speed = (cmdBuff.cmdParams[4] << 8) | cmdBuff.cmdParams[5];
+                spdChange = 1;
             
-            motor_set_speed(m0speed, 0);
-            motor_set_speed(m1speed, 1);
+                motor_set_speed(m0speed, 0);
+                motor_set_speed(m1speed, 1);
             
-            //servos[0].pos = cmdBuff.cmdParams[7];
-            //servos[1].pos = cmdBuff.cmdParams[9];
-        }
+                //servos[0].pos = cmdBuff.cmdParams[7];
+                //servos[1].pos = cmdBuff.cmdParams[9];
+            }
         
-        commandsReceived = 1;
+            commandsReceived = 1;
+        }
     }
 }
 
@@ -87,7 +92,6 @@ int main (void)
     InitUart();
     motor_init();
     
-    // Why does it get skipped?
     Analogs_Init();
     
     INTC_register_interrupt(uart_rx_handler, AVR32_USART2_IRQ, AVR32_INTC_INTLEVEL_INT1);
