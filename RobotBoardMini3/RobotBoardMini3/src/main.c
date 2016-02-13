@@ -75,15 +75,11 @@ int main (void)
 {
     uint8_t ledPos = 0;
     uint8_t* pAdcTx;
-    uint16_t i;
-    uint16_t tmp;
+    uint32_t tmp;
+    int16_t iTmp;
     
 	sysclk_init();
 	board_init();
-    
-    //gpio_local_init();
-    //gpio_enable_gpio_pin(AVR32_PIN_PB02);
-    //gpio_local_enable_pin_output_driver(AVR32_PIN_PB02);
 
     Disable_global_interrupt();
     INTC_init_interrupts();
@@ -114,13 +110,59 @@ int main (void)
         {
             pAdcTx = &(adcResultsTxRawBuff[4]);
             
+            // Motor current.
+            // The resistor is 12mOhm. OpAmp multiplier is 50x.
+            // => 1 Amp = 12mV * 50 = 600mV
+            // => 1V = 5/3 A
+            tmp = Analogs_getResultMillivolts(0);
+            tmp *= 3;
+            tmp /= 5;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
+            // Motor voltage.
+            // Resistor division is 3k3 / (10k + 3k3).
+            tmp = Analogs_getResultMillivolts(1);
+            tmp *= 133;
+            tmp /= 33;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
+            // CPU battery current.
+            // The voltage should be approximately 1.5V / A.
+            tmp = Analogs_getResultMillivolts(2);
+            tmp *= 2;
+            tmp /= 3;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
+            // Main battery voltage.
+            // The division is 1k / (10k + 1k).
+            tmp = Analogs_getResultMillivolts(3);
+            tmp *= 11;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
+            // Temperature sensor MCP9700.
+            // Resistor division is 2 (20k / (20k + 20k)).
+            tmp = Analogs_getResultMillivolts(4);
+            tmp *= 2;
+            // Using a signed integer, as temperatures can be negative.
+            // V(0C) = 500mV.
+            iTmp = tmp - 500;
+            // Coefficient is 10mV / C.
+            iTmp /= 10;
+            *pAdcTx++ = (iTmp >> 8) & 0xFF;
+            *pAdcTx++ = iTmp & 0xFF;
+            
+            /*
             for (i = 0; i < ANALOGS_NUM_CHANNELS; i++)
             {
                 tmp = Analogs_getResultMillivolts(i);
                 *pAdcTx++ = tmp >> 8;
                 *pAdcTx++ = tmp & 0xFF;
             }
-            
+            */
             tmp = interpreterFormMessage(txBuff, adcResultsTxRawBuff, 14);
             
             // Null-terminate for the following string function.
