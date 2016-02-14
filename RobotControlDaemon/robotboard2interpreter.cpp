@@ -75,69 +75,38 @@ void RobotBoard2Interpreter::extractValues(const uint8_t* buffer, uint16_t lengt
 
 void RobotBoard2Interpreter::extractAdcValues(const uint8_t* buffer, uint16_t length)
 {
-    int16_t tmp;
-    float voltage;
+    int16_t iTmp;
+    uint16_t tmp;
 
-    // --MCU Internal temperature--
-    tmp = buffer[0] << 8;
-    tmp |= buffer[1];
+    // --PCB temperature--
+    iTmp = buffer[2] << 8;
+    iTmp |= buffer[3];
 
-    // The ADC has a 12bit result. But for signed measurements, one bit is the sign.
-    // The reference is 3.3V / 1.6
-    // 2**12 == 4096, 2**11 == 2048
-
-    // Temperature is an internal mesurement, unsigned, no gain.
-    // TODO: find out the temperature/voltage coefficient and zero-point. They're individual for processors.
-    mMcuTemperature = (tmp * 1.0f) / 4096.0f * (3.3f / 1.6f);
-
-    // --Temperature sensor--
-    tmp = buffer[2] << 8;
-    tmp |= buffer[3];
-
-    // Measurement is signed and thus 11bit. Div/2 gain is in effect.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
-    // The sensor type in use is MCP9700.
-    // Vout = TCoefficient * Ta + V0deg => Ta = (Vout - V0deg) / TCoefficient
-    // V0deg is 500mV = 0.5V
-    // TCoefficient is 10.0mV/degC = 0.01
-    mTemperature = (voltage - 0.5f) / 0.01f;
+    mTemperature = (iTmp * 1.0f) / 10.0f;
 
     // --CPU current--
     tmp = buffer[4] << 8;
     tmp |= buffer[5];
 
-    // Current sense resistor has 2x parallel 0.039 Ohms.
-    // Sensor puts out voltage over sense resistor multiplied by 100.
-    // Gain setting is Div/2.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
-    mCpuCurrent = voltage / (0.039 / 2.0) / 100;
+    mCpuCurrent = (tmp * 1.0f) / 1000.0f;
 
     // --CPU battery voltage--
     tmp = buffer[6] << 8;
     tmp |= buffer[7];
 
-    // Differential, but with no gain, as input is 1/7 of the battery voltage through resistor division.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
-    mCpuVoltage = voltage * ((20.0f + 3.3f) / 3.3f);
+    mCpuVoltage = (tmp * 1.0f) / 1000.0f;
 
     // --Motor current--
     tmp = buffer[8] << 8;
     tmp |= buffer[9];
 
-    // The full scale of the current sensors is +/-12A. Zero point is Vcc/2.
-    // The input has 0.5x gain. Mode is signed, so full-scale is 2**11.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f * 2.0f / 1.6f);
-    // Deduct 2**11 / 2 == 1024 to make result signed and
-    mMotorCurrent = (voltage / (3.3f / 2.0f)) * 12.0f;
+    mMotorCurrent = (tmp * 1.0f) / 1000.0f;
 
     // --Motor voltage--
     tmp = buffer[10] << 8;
     tmp |= buffer[11];
 
-    // Signed, no gain.
-    voltage = (tmp * 1.0f) / 2048.0f * (3.3f / 1.6f);
-    // The voltage comes through a dividing resistors. Calculate backwards to original.
-    mMotorVoltage = voltage * ((20.0f + 4.7f) / 4.7f);
+    mMotorVoltage = (tmp * 1.0f) / 1000.0f;
 }
 
 void RobotBoard2Interpreter::producePlaintext()
