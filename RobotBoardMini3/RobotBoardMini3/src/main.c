@@ -110,6 +110,35 @@ int main (void)
         {
             pAdcTx = &(adcResultsTxRawBuff[4]);
             
+            // Temperature sensor MCP9700.
+            // Resistor division is 2 (20k / (20k + 20k)).
+            tmp = Analogs_getResultMillivolts(ANe_AD_CHAN_PCB_TEMP);
+            tmp *= 2;
+            // Using a signed integer, as temperatures can be negative.
+            // V(0C) = 500mV.
+            iTmp = tmp - 500;
+            // Coefficient is 10mV / Celsius.
+            // However, the unit here is 0.1C / 1, so they cancel each other out. 
+            //iTmp /= 10;
+            //iTmp *= 10;
+            *pAdcTx++ = (iTmp >> 8) & 0xFF;
+            *pAdcTx++ = iTmp & 0xFF;
+            
+            // CPU battery current.
+            // The voltage should be approximately 1.5V / A.
+            tmp = Analogs_getResultMillivolts(2);
+            tmp *= 2;
+            tmp /= 3;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
+            // Main battery voltage.
+            // The division is 1k / (10k + 1k).
+            tmp = Analogs_getResultMillivolts(ANe_AD_CHAN_BAT_VOLT);
+            tmp *= 11;
+            *pAdcTx++ = tmp >> 8;
+            *pAdcTx++ = tmp & 0xFF;
+            
             // Motor current.
             // The resistor is 12mOhm. OpAmp multiplier is 50x.
             // => 1 Amp = 12mV * 50 = 600mV
@@ -127,33 +156,6 @@ int main (void)
             tmp /= 33;
             *pAdcTx++ = tmp >> 8;
             *pAdcTx++ = tmp & 0xFF;
-            
-            // CPU battery current.
-            // The voltage should be approximately 1.5V / A.
-            tmp = Analogs_getResultMillivolts(2);
-            tmp *= 2;
-            tmp /= 3;
-            *pAdcTx++ = tmp >> 8;
-            *pAdcTx++ = tmp & 0xFF;
-            
-            // Main battery voltage.
-            // The division is 1k / (10k + 1k).
-            tmp = Analogs_getResultMillivolts(3);
-            tmp *= 11;
-            *pAdcTx++ = tmp >> 8;
-            *pAdcTx++ = tmp & 0xFF;
-            
-            // Temperature sensor MCP9700.
-            // Resistor division is 2 (20k / (20k + 20k)).
-            tmp = Analogs_getResultMillivolts(4);
-            tmp *= 2;
-            // Using a signed integer, as temperatures can be negative.
-            // V(0C) = 500mV.
-            iTmp = tmp - 500;
-            // Coefficient is 10mV / C.
-            iTmp /= 10;
-            *pAdcTx++ = (iTmp >> 8) & 0xFF;
-            *pAdcTx++ = iTmp & 0xFF;
             
             /*
             for (i = 0; i < ANALOGS_NUM_CHANNELS; i++)
